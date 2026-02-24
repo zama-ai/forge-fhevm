@@ -10,7 +10,7 @@ import {InputVerifierDeployer} from "./InputVerifierDeployer.sol";
 abstract contract KMSVerifierDeployer is InputVerifierDeployer {
     KMSVerifier internal kmsVerifierContract;
 
-    uint256 internal constant MOCK_KMS_SIGNER_PK = 0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d;
+    uint256 internal constant MOCK_KMS_SIGNER_PK = 0x388b7680e4e1afa06efbfd45cdd1fe39f3c6af381df6555a19661f283b97de91;
     address internal mockKmsSigner;
 
     /// @notice Deploys and initializes the real KMSVerifier stack at canonical test addresses.

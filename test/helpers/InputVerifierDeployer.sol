@@ -9,7 +9,7 @@ import {ExecutorDeployer} from "./ExecutorDeployer.sol";
 abstract contract InputVerifierDeployer is ExecutorDeployer {
     InputVerifier internal inputVerifierContract;
 
-    uint256 internal constant MOCK_INPUT_SIGNER_PK = 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80;
+    uint256 internal constant MOCK_INPUT_SIGNER_PK = 0x7ec8ada6642fc4ccfb7729bc29c17cf8d21b61abd5642d1db992c0b8672ab901;
     address internal mockInputSigner;
 
     function _deployInputVerifierStack() internal {

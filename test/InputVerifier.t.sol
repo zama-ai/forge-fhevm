@@ -9,7 +9,7 @@ import {InputProofHelper} from "../src/InputProofHelper.sol";
 import {InputProofTestHelper} from "./helpers/InputProofTestHelper.sol";
 
 contract InputVerifierTest is InputProofTestHelper {
-    uint256 internal constant MOCK_KMS_SIGNER_PK = 0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d;
+    uint256 internal constant MOCK_KMS_SIGNER_PK = 0x388b7680e4e1afa06efbfd45cdd1fe39f3c6af381df6555a19661f283b97de91;
     address internal constant USER = address(0xA11CE);
     bytes internal constant EXTRA_DATA = hex"00";
 

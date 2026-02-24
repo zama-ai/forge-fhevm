@@ -33,8 +33,8 @@ abstract contract FhevmTest is PlaintextDBMixin {
     error ContractNotAuthorizedForDecrypt(bytes32 handle, address contractAddress);
     error InvalidUserDecryptSignature();
 
-    uint256 internal constant MOCK_INPUT_SIGNER_PK = 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80;
-    uint256 internal constant MOCK_KMS_SIGNER_PK = 0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d;
+    uint256 internal constant MOCK_INPUT_SIGNER_PK = 0x7ec8ada6642fc4ccfb7729bc29c17cf8d21b61abd5642d1db992c0b8672ab901;
+    uint256 internal constant MOCK_KMS_SIGNER_PK = 0x388b7680e4e1afa06efbfd45cdd1fe39f3c6af381df6555a19661f283b97de91;
 
     bytes internal constant EMPTY_EXTRA_DATA = hex"00";
     uint256 internal constant DEFAULT_USER_DECRYPT_DURATION_DAYS = 1;
