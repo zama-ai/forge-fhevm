@@ -1,0 +1,23 @@
+{
+  "../fhevm": {
+    "rev": "5b381fb761ef87f8aab490106634ea8ed0d54704"
+  },
+  "../fhevm-mocks": {
+    "rev": "18b5199c3460b929ea1d2d799b95170289d2b6cd"
+  },
+  "../openzeppelin-confidential-contracts": {
+    "rev": "586eb39bfb20fb9af7c936e18e75ce1349f2a1b7"
+  },
+  "fhevm": {
+    "rev": "5b381fb761ef87f8aab490106634ea8ed0d54704"
+  },
+  "fhevm-mocks": {
+    "rev": "18b5199c3460b929ea1d2d799b95170289d2b6cd"
+  },
+  "lib/forge-std": {
+    "tag": {
+      "name": "v1.14.0",
+      "rev": "1801b0541f4fda118a10798fd3486bb7051c5dd6"
+    }
+  }
+}

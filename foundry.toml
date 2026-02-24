@@ -1,0 +1,22 @@
+[profile.default]
+src = "src"
+out = "out"
+libs = ["dependencies"]
+allow_paths = ["../"]
+test = "test"
+solc = "0.8.27"
+evm_version = "cancun"
+
+[fuzz]
+runs = 256
+
+[fmt]
+line_length = 120
+
+[dependencies]
+"@openzeppelin-contracts" = "5.1.0"
+"@openzeppelin-contracts-upgradeable" = "5.1.0"
+forge-std = "1.14.0"
+fhevm = { version = "0.11.1", git = "https://github.com/zama-ai/fhevm.git", rev = "2458fa9c2c78b7d84ef55ff0754f6bd80c4a15f6"}
+"@openzeppelin-confidential-contracts" = { version = "6edd293", git = "https://github.com/OpenZeppelin/openzeppelin-confidential-contracts.git", rev = "6edd293" }
+encrypted-types = { version = "0.0.4", git = "https://github.com/confidential-token-association/encrypted-types.git", tag = "v0.0.4" }

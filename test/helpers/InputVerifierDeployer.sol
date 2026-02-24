@@ -1,0 +1,43 @@
+// SPDX-License-Identifier: BSD-3-Clause-Clear
+pragma solidity ^0.8.27;
+
+import {EmptyUUPSProxy} from "@fhevm/host-contracts/contracts/emptyProxy/EmptyUUPSProxy.sol";
+import {InputVerifier} from "@fhevm/host-contracts/contracts/InputVerifier.sol";
+import {inputVerifierAdd} from "@fhevm/host-contracts/addresses/FHEVMHostAddresses.sol";
+import {ExecutorDeployer} from "./ExecutorDeployer.sol";
+
+abstract contract InputVerifierDeployer is ExecutorDeployer {
+    InputVerifier internal inputVerifierContract;
+
+    uint256 internal constant MOCK_INPUT_SIGNER_PK =
+        0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80;
+    address internal mockInputSigner;
+
+    function _deployInputVerifierStack() internal {
+        _deployExecutorStack();
+
+        mockInputSigner = vm.addr(MOCK_INPUT_SIGNER_PK);
+
+        address emptyProxyImpl = address(new EmptyUUPSProxy());
+        deployCodeTo(
+            "test/helpers/ExecutorDeployer.sol:DeployableERC1967Proxy",
+            abi.encode(emptyProxyImpl, abi.encodeCall(EmptyUUPSProxy.initialize, ())),
+            inputVerifierAdd
+        );
+        vm.label(inputVerifierAdd, "InputVerifier Proxy");
+
+        address inputVerifierImpl = address(new InputVerifier());
+        vm.label(inputVerifierImpl, "InputVerifier Implementation");
+
+        address[] memory signers = new address[](1);
+        signers[0] = mockInputSigner;
+
+        vm.prank(OWNER);
+        EmptyUUPSProxy(inputVerifierAdd).upgradeToAndCall(
+            inputVerifierImpl,
+            abi.encodeCall(InputVerifier.initializeFromEmptyProxy, (inputVerifierAdd, uint64(block.chainid), signers, 1))
+        );
+
+        inputVerifierContract = InputVerifier(inputVerifierAdd);
+    }
+}
