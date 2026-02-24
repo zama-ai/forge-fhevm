@@ -21,11 +21,7 @@ library KMSDecryptionProofHelper {
     ) internal pure returns (bytes32) {
         return keccak256(
             abi.encode(
-                EIP712_DOMAIN_TYPEHASH,
-                keccak256(bytes(name)),
-                keccak256(bytes(version)),
-                chainId,
-                verifyingContract
+                EIP712_DOMAIN_TYPEHASH, keccak256(bytes(name)), keccak256(bytes(version)), chainId, verifyingContract
             )
         );
     }

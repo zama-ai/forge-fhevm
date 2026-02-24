@@ -26,12 +26,7 @@ abstract contract InputProofTestHelper is InputVerifierDeployer {
         returns (bytes32)
     {
         return InputProofHelper.computeInputVerificationDigest(
-            handles,
-            userAddress,
-            contractAddress,
-            block.chainid,
-            extraData,
-            _domainSeparator()
+            handles, userAddress, contractAddress, block.chainid, extraData, _domainSeparator()
         );
     }
 
@@ -56,13 +51,11 @@ abstract contract InputProofTestHelper is InputVerifierDeployer {
         return InputProofHelper.assembleInputProof(handles, signatures, extraData);
     }
 
-    function _inputHandle(
-        uint256 value,
-        FheType fheType,
-        uint8 index,
-        uint256 nonce,
-        uint64 chainId
-    ) internal pure returns (bytes32) {
+    function _inputHandle(uint256 value, FheType fheType, uint8 index, uint256 nonce, uint64 chainId)
+        internal
+        pure
+        returns (bytes32)
+    {
         bytes memory ciphertext = _mockCiphertext(value, fheType, nonce);
         return InputProofHelper.computeInputHandle(ciphertext, index, fheType, aclAdd, chainId);
     }

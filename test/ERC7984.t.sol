@@ -713,7 +713,6 @@ contract ERC7984Test is FhevmTest {
         }
     }
 
-
     /// @notice Decrypts the confidential balance of `account` using the provided private key.
     /// @param pk Private key used to sign user decrypt authorization.
     /// @param account Account whose encrypted balance is decrypted.
@@ -739,7 +738,10 @@ contract ERC7984Test is FhevmTest {
         return uint64(userDecrypt(euint64.unwrap(handle), user, address(token), signature));
     }
 
-    function _publicDecryptForDisclose(euint64 handle) internal returns (uint64 cleartext, bytes memory decryptionProof) {
+    function _publicDecryptForDisclose(euint64 handle)
+        internal
+        returns (uint64 cleartext, bytes memory decryptionProof)
+    {
         bytes32 handleRaw = euint64.unwrap(handle);
         if (!_acl.isAllowedForDecryption(handleRaw)) {
             revert HandleNotAllowedForPublicDecryption(handleRaw);
@@ -756,8 +758,9 @@ contract ERC7984Test is FhevmTest {
             _kmsVerifier.eip712Domain();
         bytes32 domainSeparator =
             KMSDecryptionProofHelper.computeKMSDecryptionDomainSeparator(name, version, chainId, verifyingContract);
-        bytes32 digest =
-            KMSDecryptionProofHelper.computeDecryptionDigest(handles, cleartextMemory, EMPTY_EXTRA_DATA, domainSeparator);
+        bytes32 digest = KMSDecryptionProofHelper.computeDecryptionDigest(
+            handles, cleartextMemory, EMPTY_EXTRA_DATA, domainSeparator
+        );
 
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(MOCK_KMS_SIGNER_PK, digest);
         bytes[] memory signatures = new bytes[](1);

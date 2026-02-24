@@ -10,8 +10,7 @@ import {InputVerifierDeployer} from "./InputVerifierDeployer.sol";
 abstract contract KMSVerifierDeployer is InputVerifierDeployer {
     KMSVerifier internal kmsVerifierContract;
 
-    uint256 internal constant MOCK_KMS_SIGNER_PK =
-        0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d;
+    uint256 internal constant MOCK_KMS_SIGNER_PK = 0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d;
     address internal mockKmsSigner;
 
     /// @notice Deploys and initializes the real KMSVerifier stack at canonical test addresses.
@@ -36,10 +35,13 @@ abstract contract KMSVerifierDeployer is InputVerifierDeployer {
         signers[0] = mockKmsSigner;
 
         vm.prank(OWNER);
-        EmptyUUPSProxy(kmsVerifierAdd).upgradeToAndCall(
-            kmsVerifierImpl,
-            abi.encodeCall(KMSVerifier.initializeFromEmptyProxy, (kmsVerifierAdd, uint64(block.chainid), signers, 1))
-        );
+        EmptyUUPSProxy(kmsVerifierAdd)
+            .upgradeToAndCall(
+                kmsVerifierImpl,
+                abi.encodeCall(
+                    KMSVerifier.initializeFromEmptyProxy, (kmsVerifierAdd, uint64(block.chainid), signers, 1)
+                )
+            );
 
         kmsVerifierContract = KMSVerifier(kmsVerifierAdd);
     }

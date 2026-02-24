@@ -11,19 +11,22 @@ contract FhevmTestDecryptTest is FhevmTest {
 
     function test_decrypt_bool_true() public {
         (externalEbool handle, bytes memory proof) = encryptBool(true, address(this));
-        ebool verified = ebool.wrap(_executor.verifyInput(externalEbool.unwrap(handle), address(this), proof, FheType.Bool));
+        ebool verified =
+            ebool.wrap(_executor.verifyInput(externalEbool.unwrap(handle), address(this), proof, FheType.Bool));
         assertTrue(decrypt(verified));
     }
 
     function test_decrypt_bool_false() public {
         (externalEbool handle, bytes memory proof) = encryptBool(false, address(this));
-        ebool verified = ebool.wrap(_executor.verifyInput(externalEbool.unwrap(handle), address(this), proof, FheType.Bool));
+        ebool verified =
+            ebool.wrap(_executor.verifyInput(externalEbool.unwrap(handle), address(this), proof, FheType.Bool));
         assertFalse(decrypt(verified));
     }
 
     function test_decrypt_uint8() public {
         (externalEuint8 handle, bytes memory proof) = encryptUint8(42, address(this));
-        euint8 verified = euint8.wrap(_executor.verifyInput(externalEuint8.unwrap(handle), address(this), proof, FheType.Uint8));
+        euint8 verified =
+            euint8.wrap(_executor.verifyInput(externalEuint8.unwrap(handle), address(this), proof, FheType.Uint8));
         assertEq(decrypt(verified), 42);
     }
 
@@ -51,16 +54,18 @@ contract FhevmTestDecryptTest is FhevmTest {
     function test_decrypt_uint128() public {
         uint128 value = type(uint128).max - 7;
         (externalEuint128 handle, bytes memory proof) = encryptUint128(value, address(this));
-        euint128 verified =
-            euint128.wrap(_executor.verifyInput(externalEuint128.unwrap(handle), address(this), proof, FheType.Uint128));
+        euint128 verified = euint128.wrap(
+            _executor.verifyInput(externalEuint128.unwrap(handle), address(this), proof, FheType.Uint128)
+        );
         assertEq(decrypt(verified), value);
     }
 
     function test_decrypt_uint256() public {
         uint256 value = type(uint256).max - 5;
         (externalEuint256 handle, bytes memory proof) = encryptUint256(value, address(this));
-        euint256 verified =
-            euint256.wrap(_executor.verifyInput(externalEuint256.unwrap(handle), address(this), proof, FheType.Uint256));
+        euint256 verified = euint256.wrap(
+            _executor.verifyInput(externalEuint256.unwrap(handle), address(this), proof, FheType.Uint256)
+        );
         assertEq(decrypt(verified), value);
     }
 

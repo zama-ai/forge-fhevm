@@ -32,7 +32,9 @@ contract FhevmTestUserDecryptTest is FhevmTest {
 
         bytes memory signature = signUserDecrypt(USER_PK, contractAddress);
 
-        vm.expectRevert(abi.encodeWithSelector(UserNotAuthorizedForDecrypt.selector, externalEuint64.unwrap(handle), user));
+        vm.expectRevert(
+            abi.encodeWithSelector(UserNotAuthorizedForDecrypt.selector, externalEuint64.unwrap(handle), user)
+        );
         this.callUserDecrypt(externalEuint64.unwrap(handle), user, contractAddress, signature);
     }
 
@@ -48,7 +50,9 @@ contract FhevmTestUserDecryptTest is FhevmTest {
 
         bytes memory signature = signUserDecrypt(USER_PK, contractAddress);
 
-        vm.expectRevert(abi.encodeWithSelector(UserNotAuthorizedForDecrypt.selector, externalEuint64.unwrap(handle), user));
+        vm.expectRevert(
+            abi.encodeWithSelector(UserNotAuthorizedForDecrypt.selector, externalEuint64.unwrap(handle), user)
+        );
         this.callUserDecrypt(externalEuint64.unwrap(handle), user, contractAddress, signature);
     }
 
@@ -63,7 +67,9 @@ contract FhevmTestUserDecryptTest is FhevmTest {
         bytes memory signature = signUserDecrypt(USER_PK, contractAddress);
 
         vm.expectRevert(
-            abi.encodeWithSelector(ContractNotAuthorizedForDecrypt.selector, externalEuint64.unwrap(handle), contractAddress)
+            abi.encodeWithSelector(
+                ContractNotAuthorizedForDecrypt.selector, externalEuint64.unwrap(handle), contractAddress
+            )
         );
         this.callUserDecrypt(externalEuint64.unwrap(handle), user, contractAddress, signature);
     }
@@ -113,27 +119,39 @@ contract FhevmTestUserDecryptTest is FhevmTest {
         }
         {
             (externalEuint16 h2, bytes memory p2) = encryptUint16(2, address(this));
-            _verifyPersistAndDecrypt(externalEuint16.unwrap(h2), p2, FheType.Uint16, 2, user, contractAddress, signature);
+            _verifyPersistAndDecrypt(
+                externalEuint16.unwrap(h2), p2, FheType.Uint16, 2, user, contractAddress, signature
+            );
         }
         {
             (externalEuint32 h3, bytes memory p3) = encryptUint32(3, address(this));
-            _verifyPersistAndDecrypt(externalEuint32.unwrap(h3), p3, FheType.Uint32, 3, user, contractAddress, signature);
+            _verifyPersistAndDecrypt(
+                externalEuint32.unwrap(h3), p3, FheType.Uint32, 3, user, contractAddress, signature
+            );
         }
         {
             (externalEuint64 h4, bytes memory p4) = encryptUint64(4, address(this));
-            _verifyPersistAndDecrypt(externalEuint64.unwrap(h4), p4, FheType.Uint64, 4, user, contractAddress, signature);
+            _verifyPersistAndDecrypt(
+                externalEuint64.unwrap(h4), p4, FheType.Uint64, 4, user, contractAddress, signature
+            );
         }
         {
             (externalEuint128 h5, bytes memory p5) = encryptUint128(5, address(this));
-            _verifyPersistAndDecrypt(externalEuint128.unwrap(h5), p5, FheType.Uint128, 5, user, contractAddress, signature);
+            _verifyPersistAndDecrypt(
+                externalEuint128.unwrap(h5), p5, FheType.Uint128, 5, user, contractAddress, signature
+            );
         }
         {
             (externalEuint256 h6, bytes memory p6) = encryptUint256(6, address(this));
-            _verifyPersistAndDecrypt(externalEuint256.unwrap(h6), p6, FheType.Uint256, 6, user, contractAddress, signature);
+            _verifyPersistAndDecrypt(
+                externalEuint256.unwrap(h6), p6, FheType.Uint256, 6, user, contractAddress, signature
+            );
         }
         {
             (externalEaddress h7, bytes memory p7) = encryptAddress(address(7), address(this));
-            _verifyPersistAndDecrypt(externalEaddress.unwrap(h7), p7, FheType.Uint160, 7, user, contractAddress, signature);
+            _verifyPersistAndDecrypt(
+                externalEaddress.unwrap(h7), p7, FheType.Uint160, 7, user, contractAddress, signature
+            );
         }
     }
 
@@ -147,12 +165,7 @@ contract FhevmTestUserDecryptTest is FhevmTest {
 
         bytes32 domain = UserDecryptHelper.computeUserDecryptDomainSeparator(block.chainid, kmsVerifierAdd);
         bytes32 digest = UserDecryptHelper.computeUserDecryptDigest(
-            abi.encodePacked(user),
-            contractAddresses,
-            block.timestamp,
-            1,
-            EMPTY_EXTRA_DATA,
-            domain
+            abi.encodePacked(user), contractAddresses, block.timestamp, 1, EMPTY_EXTRA_DATA, domain
         );
 
         bytes32 r;

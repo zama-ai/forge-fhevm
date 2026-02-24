@@ -25,8 +25,9 @@ abstract contract KMSDecryptionProofTestHelper is KMSVerifierDeployer {
         view
         returns (bytes32)
     {
-        return
-            KMSDecryptionProofHelper.computeDecryptionDigest(handlesList, decryptedResult, extraData, _kmsDomainSeparator());
+        return KMSDecryptionProofHelper.computeDecryptionDigest(
+            handlesList, decryptedResult, extraData, _kmsDomainSeparator()
+        );
     }
 
     /// @notice Signs an EIP-712 digest and returns the compact 65-byte signature encoding.

@@ -65,7 +65,8 @@ abstract contract ExecutorDeployer is PlaintextDBMixin {
         vm.label(hcuLimitImpl, "HCULimit Implementation");
 
         vm.prank(OWNER);
-        EmptyUUPSProxy(hcuLimitAdd).upgradeToAndCall(hcuLimitImpl, abi.encodeCall(HCULimit.initializeFromEmptyProxy, ()));
+        EmptyUUPSProxy(hcuLimitAdd)
+            .upgradeToAndCall(hcuLimitImpl, abi.encodeCall(HCULimit.initializeFromEmptyProxy, ()));
 
         deployCodeTo(
             "test/helpers/ExecutorDeployer.sol:DeployableERC1967Proxy",
@@ -78,10 +79,8 @@ abstract contract ExecutorDeployer is PlaintextDBMixin {
         vm.label(executorImpl, "FHEVMExecutor Implementation");
 
         vm.prank(OWNER);
-        EmptyUUPSProxy(fhevmExecutorAdd).upgradeToAndCall(
-            executorImpl,
-            abi.encodeCall(FHEVMExecutor.initializeFromEmptyProxy, ())
-        );
+        EmptyUUPSProxy(fhevmExecutorAdd)
+            .upgradeToAndCall(executorImpl, abi.encodeCall(FHEVMExecutor.initializeFromEmptyProxy, ()));
 
         executor = FHEVMExecutor(fhevmExecutorAdd);
 

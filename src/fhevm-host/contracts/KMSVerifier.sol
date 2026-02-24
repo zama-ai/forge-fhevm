@@ -218,15 +218,12 @@ contract KMSVerifier is UUPSUpgradeableEmptyProxy, EIP712UpgradeableCrossChain, 
         /// @dev Extract the extraData from the decryptionProof.
         uint256 extraDataSize = decryptionProof.length - extraDataOffset;
         bytes memory extraData = new bytes(extraDataSize);
-        for (uint i = 0; i < extraDataSize; i++) {
+        for (uint256 i = 0; i < extraDataSize; i++) {
             extraData[i] = decryptionProof[extraDataOffset + i];
         }
 
-        PublicDecryptVerification memory publicDecryptVerification = PublicDecryptVerification(
-            handlesList,
-            decryptedResult,
-            extraData
-        );
+        PublicDecryptVerification memory publicDecryptVerification =
+            PublicDecryptVerification(handlesList, decryptedResult, extraData);
         bytes32 digest = _hashDecryptionResult(publicDecryptVerification);
 
         return _verifySignaturesDigest(digest, signatures);
@@ -266,18 +263,17 @@ contract KMSVerifier is UUPSUpgradeableEmptyProxy, EIP712UpgradeableCrossChain, 
      * @return string Name and the version of the contract.
      */
     function getVersion() external pure virtual returns (string memory) {
-        return
-            string(
-                abi.encodePacked(
-                    CONTRACT_NAME,
-                    " v",
-                    Strings.toString(MAJOR_VERSION),
-                    ".",
-                    Strings.toString(MINOR_VERSION),
-                    ".",
-                    Strings.toString(PATCH_VERSION)
-                )
-            );
+        return string(
+            abi.encodePacked(
+                CONTRACT_NAME,
+                " v",
+                Strings.toString(MAJOR_VERSION),
+                ".",
+                Strings.toString(MINOR_VERSION),
+                ".",
+                Strings.toString(PATCH_VERSION)
+            )
+        );
     }
 
     /**
@@ -372,17 +368,16 @@ contract KMSVerifier is UUPSUpgradeableEmptyProxy, EIP712UpgradeableCrossChain, 
      * @return hashTypedData    Hash typed data.
      */
     function _hashDecryptionResult(PublicDecryptVerification memory decRes) internal view virtual returns (bytes32) {
-        return
-            _hashTypedDataV4(
-                keccak256(
-                    abi.encode(
-                        DECRYPTION_RESULT_TYPEHASH,
-                        keccak256(abi.encodePacked(decRes.ctHandles)),
-                        keccak256(decRes.decryptedResult),
-                        keccak256(abi.encodePacked(decRes.extraData))
-                    )
+        return _hashTypedDataV4(
+            keccak256(
+                abi.encode(
+                    DECRYPTION_RESULT_TYPEHASH,
+                    keccak256(abi.encodePacked(decRes.ctHandles)),
+                    keccak256(decRes.decryptedResult),
+                    keccak256(abi.encodePacked(decRes.extraData))
                 )
-            );
+            )
+        );
     }
 
     /**

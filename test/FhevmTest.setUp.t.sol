@@ -3,19 +3,22 @@ pragma solidity ^0.8.27;
 
 import {FHE} from "@fhevm/solidity/lib/FHE.sol";
 import {ZamaEthereumConfig} from "@fhevm/solidity/config/ZamaConfig.sol";
-import {fhevmExecutorAdd, aclAdd, inputVerifierAdd, kmsVerifierAdd} from "@fhevm/host-contracts/addresses/FHEVMHostAddresses.sol";
+import {
+    fhevmExecutorAdd,
+    aclAdd,
+    inputVerifierAdd,
+    kmsVerifierAdd
+} from "@fhevm/host-contracts/addresses/FHEVMHostAddresses.sol";
 import {FhevmTest} from "../src/FhevmTest.sol";
 import {FheType} from "@fhevm/host-contracts/contracts/shared/FheType.sol";
 
 import "encrypted-types/EncryptedTypes.sol";
 
 contract FhevmSetUpRoutingHarness is ZamaEthereumConfig {
-    function addFromExternal(
-        externalEuint64 lhs,
-        bytes calldata lhsProof,
-        externalEuint64 rhs,
-        bytes calldata rhsProof
-    ) external returns (euint64) {
+    function addFromExternal(externalEuint64 lhs, bytes calldata lhsProof, externalEuint64 rhs, bytes calldata rhsProof)
+        external
+        returns (euint64)
+    {
         euint64 left = FHE.fromExternal(lhs, lhsProof);
         euint64 right = FHE.fromExternal(rhs, rhsProof);
         euint64 sum = FHE.add(left, right);

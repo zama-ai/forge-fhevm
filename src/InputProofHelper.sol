@@ -46,7 +46,11 @@ library InputProofHelper {
     {
         return keccak256(
             abi.encode(
-                EIP712_DOMAIN_TYPEHASH, keccak256(bytes("InputVerification")), keccak256(bytes("1")), chainId, verifyingContract
+                EIP712_DOMAIN_TYPEHASH,
+                keccak256(bytes("InputVerification")),
+                keccak256(bytes("1")),
+                chainId,
+                verifyingContract
             )
         );
     }

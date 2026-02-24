@@ -9,7 +9,9 @@ import {FheType} from "@fhevm/host-contracts/contracts/shared/FheType.sol";
 import "encrypted-types/EncryptedTypes.sol";
 
 contract FhevmPublicDecryptVerifier is ZamaEthereumConfig {
-    function verify(bytes32[] memory handles, bytes memory abiEncodedCleartexts, bytes memory decryptionProof) external {
+    function verify(bytes32[] memory handles, bytes memory abiEncodedCleartexts, bytes memory decryptionProof)
+        external
+    {
         FHE.checkSignatures(handles, abiEncodedCleartexts, decryptionProof);
     }
 }
@@ -47,7 +49,8 @@ contract FhevmTestPublicDecryptTest is FhevmTest {
         _acl.allowForDecryption(handles);
 
         (uint256[] memory cleartexts, bytes memory decryptionProof) = publicDecrypt(handles);
-        bool verified = _kmsVerifier.verifyDecryptionEIP712KMSSignatures(handles, abi.encode(cleartexts), decryptionProof);
+        bool verified =
+            _kmsVerifier.verifyDecryptionEIP712KMSSignatures(handles, abi.encode(cleartexts), decryptionProof);
         assertTrue(verified);
     }
 

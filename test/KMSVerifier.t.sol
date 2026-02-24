@@ -8,8 +8,7 @@ import {FheType} from "@fhevm/host-contracts/contracts/shared/FheType.sol";
 import {KMSDecryptionProofTestHelper} from "./helpers/KMSDecryptionProofTestHelper.sol";
 
 contract KMSVerifierTest is KMSDecryptionProofTestHelper {
-    uint256 internal constant WRONG_SIGNER_PK =
-        0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80;
+    uint256 internal constant WRONG_SIGNER_PK = 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80;
 
     function setUp() public {
         _deployKMSVerifierStack();
@@ -49,7 +48,8 @@ contract KMSVerifierTest is KMSDecryptionProofTestHelper {
         clearValues[0] = 12345;
         bytes memory decryptedResult = _abiEncodeClearValues(clearValues);
 
-        bytes memory proof = _decryptionProofSingleSigner(handles, decryptedResult, DEFAULT_EXTRA_DATA, MOCK_KMS_SIGNER_PK);
+        bytes memory proof =
+            _decryptionProofSingleSigner(handles, decryptedResult, DEFAULT_EXTRA_DATA, MOCK_KMS_SIGNER_PK);
         bool isVerified = kmsVerifierContract.verifyDecryptionEIP712KMSSignatures(handles, decryptedResult, proof);
         assertTrue(isVerified);
     }
@@ -66,7 +66,8 @@ contract KMSVerifierTest is KMSDecryptionProofTestHelper {
         clearValues[2] = type(uint256).max;
         bytes memory decryptedResult = _abiEncodeClearValues(clearValues);
 
-        bytes memory proof = _decryptionProofSingleSigner(handles, decryptedResult, DEFAULT_EXTRA_DATA, MOCK_KMS_SIGNER_PK);
+        bytes memory proof =
+            _decryptionProofSingleSigner(handles, decryptedResult, DEFAULT_EXTRA_DATA, MOCK_KMS_SIGNER_PK);
         bool isVerified = kmsVerifierContract.verifyDecryptionEIP712KMSSignatures(handles, decryptedResult, proof);
         assertTrue(isVerified);
     }
@@ -161,7 +162,8 @@ contract KMSVerifierTest is KMSDecryptionProofTestHelper {
         clearValues[0] = 9;
         bytes memory decryptedResult = _abiEncodeClearValues(clearValues);
 
-        bytes memory proof = _decryptionProofSingleSigner(handles, decryptedResult, DEFAULT_EXTRA_DATA, MOCK_KMS_SIGNER_PK);
+        bytes memory proof =
+            _decryptionProofSingleSigner(handles, decryptedResult, DEFAULT_EXTRA_DATA, MOCK_KMS_SIGNER_PK);
         vm.expectRevert(abi.encodeWithSelector(KMSVerifier.KMSSignatureThresholdNotReached.selector, 1));
         kmsVerifierContract.verifyDecryptionEIP712KMSSignatures(handles, decryptedResult, proof);
     }
@@ -206,9 +208,8 @@ contract KMSVerifierTest is KMSDecryptionProofTestHelper {
         uint256[] memory clearValues = new uint256[](1);
         clearValues[0] = 222;
         bytes memory decryptedResult = _abiEncodeClearValues(clearValues);
-        bytes memory proof = _decryptionProofSingleSigner(
-            signedHandles, decryptedResult, DEFAULT_EXTRA_DATA, MOCK_KMS_SIGNER_PK
-        );
+        bytes memory proof =
+            _decryptionProofSingleSigner(signedHandles, decryptedResult, DEFAULT_EXTRA_DATA, MOCK_KMS_SIGNER_PK);
 
         bytes32[] memory wrongHandles = new bytes32[](1);
         wrongHandles[0] = bytes32(uint256(999));
@@ -224,9 +225,8 @@ contract KMSVerifierTest is KMSDecryptionProofTestHelper {
         uint256[] memory clearValues = new uint256[](1);
         clearValues[0] = 654;
         bytes memory signedDecryptedResult = _abiEncodeClearValues(clearValues);
-        bytes memory proof = _decryptionProofSingleSigner(
-            handles, signedDecryptedResult, DEFAULT_EXTRA_DATA, MOCK_KMS_SIGNER_PK
-        );
+        bytes memory proof =
+            _decryptionProofSingleSigner(handles, signedDecryptedResult, DEFAULT_EXTRA_DATA, MOCK_KMS_SIGNER_PK);
 
         uint256[] memory wrongClearValues = new uint256[](1);
         wrongClearValues[0] = 655;
@@ -246,7 +246,8 @@ contract KMSVerifierTest is KMSDecryptionProofTestHelper {
         clearValues[0] = _readPlaintext(handle);
         bytes memory decryptedResult = _abiEncodeClearValues(clearValues);
 
-        bytes memory proof = _decryptionProofSingleSigner(handles, decryptedResult, DEFAULT_EXTRA_DATA, MOCK_KMS_SIGNER_PK);
+        bytes memory proof =
+            _decryptionProofSingleSigner(handles, decryptedResult, DEFAULT_EXTRA_DATA, MOCK_KMS_SIGNER_PK);
         bool isVerified = kmsVerifierContract.verifyDecryptionEIP712KMSSignatures(handles, decryptedResult, proof);
         assertTrue(isVerified);
     }
@@ -267,7 +268,8 @@ contract KMSVerifierTest is KMSDecryptionProofTestHelper {
         clearValues[2] = _readPlaintext(handle2);
         bytes memory decryptedResult = _abiEncodeClearValues(clearValues);
 
-        bytes memory proof = _decryptionProofSingleSigner(handles, decryptedResult, DEFAULT_EXTRA_DATA, MOCK_KMS_SIGNER_PK);
+        bytes memory proof =
+            _decryptionProofSingleSigner(handles, decryptedResult, DEFAULT_EXTRA_DATA, MOCK_KMS_SIGNER_PK);
         bool isVerified = kmsVerifierContract.verifyDecryptionEIP712KMSSignatures(handles, decryptedResult, proof);
         assertTrue(isVerified);
     }

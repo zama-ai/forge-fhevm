@@ -37,14 +37,20 @@ contract FhevmTestEncryptTest is FhevmTest {
         (externalEbool handle, bytes memory proof) = encryptBool(true, address(this));
         assertEq(uint8(externalEbool.unwrap(handle)[30]), uint8(FheType.Bool));
         assertEq(_plaintexts[externalEbool.unwrap(handle)], 1);
-        assertEq(_executor.verifyInput(externalEbool.unwrap(handle), address(this), proof, FheType.Bool), externalEbool.unwrap(handle));
+        assertEq(
+            _executor.verifyInput(externalEbool.unwrap(handle), address(this), proof, FheType.Bool),
+            externalEbool.unwrap(handle)
+        );
     }
 
     function test_encryptUint8_works() public {
         (externalEuint8 handle, bytes memory proof) = encryptUint8(13, address(this));
         assertEq(uint8(externalEuint8.unwrap(handle)[30]), uint8(FheType.Uint8));
         assertEq(_plaintexts[externalEuint8.unwrap(handle)], 13);
-        assertEq(_executor.verifyInput(externalEuint8.unwrap(handle), address(this), proof, FheType.Uint8), externalEuint8.unwrap(handle));
+        assertEq(
+            _executor.verifyInput(externalEuint8.unwrap(handle), address(this), proof, FheType.Uint8),
+            externalEuint8.unwrap(handle)
+        );
     }
 
     function test_encryptUint16_works() public {
@@ -52,7 +58,8 @@ contract FhevmTestEncryptTest is FhevmTest {
         assertEq(uint8(externalEuint16.unwrap(handle)[30]), uint8(FheType.Uint16));
         assertEq(_plaintexts[externalEuint16.unwrap(handle)], 513);
         assertEq(
-            _executor.verifyInput(externalEuint16.unwrap(handle), address(this), proof, FheType.Uint16), externalEuint16.unwrap(handle)
+            _executor.verifyInput(externalEuint16.unwrap(handle), address(this), proof, FheType.Uint16),
+            externalEuint16.unwrap(handle)
         );
     }
 
@@ -61,7 +68,8 @@ contract FhevmTestEncryptTest is FhevmTest {
         assertEq(uint8(externalEuint32.unwrap(handle)[30]), uint8(FheType.Uint32));
         assertEq(_plaintexts[externalEuint32.unwrap(handle)], 91_337);
         assertEq(
-            _executor.verifyInput(externalEuint32.unwrap(handle), address(this), proof, FheType.Uint32), externalEuint32.unwrap(handle)
+            _executor.verifyInput(externalEuint32.unwrap(handle), address(this), proof, FheType.Uint32),
+            externalEuint32.unwrap(handle)
         );
     }
 
@@ -71,7 +79,8 @@ contract FhevmTestEncryptTest is FhevmTest {
         assertEq(uint8(externalEuint128.unwrap(handle)[30]), uint8(FheType.Uint128));
         assertEq(_plaintexts[externalEuint128.unwrap(handle)], value);
         assertEq(
-            _executor.verifyInput(externalEuint128.unwrap(handle), address(this), proof, FheType.Uint128), externalEuint128.unwrap(handle)
+            _executor.verifyInput(externalEuint128.unwrap(handle), address(this), proof, FheType.Uint128),
+            externalEuint128.unwrap(handle)
         );
     }
 
@@ -81,7 +90,8 @@ contract FhevmTestEncryptTest is FhevmTest {
         assertEq(uint8(externalEuint256.unwrap(handle)[30]), uint8(FheType.Uint256));
         assertEq(_plaintexts[externalEuint256.unwrap(handle)], value);
         assertEq(
-            _executor.verifyInput(externalEuint256.unwrap(handle), address(this), proof, FheType.Uint256), externalEuint256.unwrap(handle)
+            _executor.verifyInput(externalEuint256.unwrap(handle), address(this), proof, FheType.Uint256),
+            externalEuint256.unwrap(handle)
         );
     }
 
@@ -92,7 +102,8 @@ contract FhevmTestEncryptTest is FhevmTest {
         assertEq(uint8(externalEaddress.unwrap(handle)[30]), uint8(FheType.Uint160));
         assertEq(_plaintexts[externalEaddress.unwrap(handle)], uint256(uint160(value)));
         assertEq(
-            _executor.verifyInput(externalEaddress.unwrap(handle), address(this), proof, FheType.Uint160), externalEaddress.unwrap(handle)
+            _executor.verifyInput(externalEaddress.unwrap(handle), address(this), proof, FheType.Uint160),
+            externalEaddress.unwrap(handle)
         );
     }
 

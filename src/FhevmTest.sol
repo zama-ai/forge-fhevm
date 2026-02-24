@@ -33,10 +33,8 @@ abstract contract FhevmTest is PlaintextDBMixin {
     error ContractNotAuthorizedForDecrypt(bytes32 handle, address contractAddress);
     error InvalidUserDecryptSignature();
 
-    uint256 internal constant MOCK_INPUT_SIGNER_PK =
-        0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80;
-    uint256 internal constant MOCK_KMS_SIGNER_PK =
-        0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d;
+    uint256 internal constant MOCK_INPUT_SIGNER_PK = 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80;
+    uint256 internal constant MOCK_KMS_SIGNER_PK = 0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d;
 
     bytes internal constant EMPTY_EXTRA_DATA = hex"00";
     uint256 internal constant DEFAULT_USER_DECRYPT_DURATION_DAYS = 1;
@@ -106,7 +104,10 @@ abstract contract FhevmTest is PlaintextDBMixin {
     /// @param value The clear uint16 value to encrypt.
     /// @param user The user embedded in the input proof authorization.
     /// @param target The contract expected to call `FHE.fromExternal`.
-    function encryptUint16(uint16 value, address user, address target) internal returns (externalEuint16, bytes memory) {
+    function encryptUint16(uint16 value, address user, address target)
+        internal
+        returns (externalEuint16, bytes memory)
+    {
         (bytes32 handle, bytes memory inputProof) = _encrypt(value, FheType.Uint16, user, target);
         return (externalEuint16.wrap(handle), inputProof);
     }
@@ -122,7 +123,10 @@ abstract contract FhevmTest is PlaintextDBMixin {
     /// @param value The clear uint32 value to encrypt.
     /// @param user The user embedded in the input proof authorization.
     /// @param target The contract expected to call `FHE.fromExternal`.
-    function encryptUint32(uint32 value, address user, address target) internal returns (externalEuint32, bytes memory) {
+    function encryptUint32(uint32 value, address user, address target)
+        internal
+        returns (externalEuint32, bytes memory)
+    {
         (bytes32 handle, bytes memory inputProof) = _encrypt(value, FheType.Uint32, user, target);
         return (externalEuint32.wrap(handle), inputProof);
     }
@@ -138,7 +142,10 @@ abstract contract FhevmTest is PlaintextDBMixin {
     /// @param value The clear uint64 value to encrypt.
     /// @param user The user embedded in the input proof authorization.
     /// @param target The contract expected to call `FHE.fromExternal`.
-    function encryptUint64(uint64 value, address user, address target) internal returns (externalEuint64, bytes memory) {
+    function encryptUint64(uint64 value, address user, address target)
+        internal
+        returns (externalEuint64, bytes memory)
+    {
         (bytes32 handle, bytes memory inputProof) = _encrypt(value, FheType.Uint64, user, target);
         return (externalEuint64.wrap(handle), inputProof);
     }
@@ -154,7 +161,10 @@ abstract contract FhevmTest is PlaintextDBMixin {
     /// @param value The clear uint128 value to encrypt.
     /// @param user The user embedded in the input proof authorization.
     /// @param target The contract expected to call `FHE.fromExternal`.
-    function encryptUint128(uint128 value, address user, address target) internal returns (externalEuint128, bytes memory) {
+    function encryptUint128(uint128 value, address user, address target)
+        internal
+        returns (externalEuint128, bytes memory)
+    {
         (bytes32 handle, bytes memory inputProof) = _encrypt(value, FheType.Uint128, user, target);
         return (externalEuint128.wrap(handle), inputProof);
     }
@@ -170,7 +180,10 @@ abstract contract FhevmTest is PlaintextDBMixin {
     /// @param value The clear uint256 value to encrypt.
     /// @param user The user embedded in the input proof authorization.
     /// @param target The contract expected to call `FHE.fromExternal`.
-    function encryptUint256(uint256 value, address user, address target) internal returns (externalEuint256, bytes memory) {
+    function encryptUint256(uint256 value, address user, address target)
+        internal
+        returns (externalEuint256, bytes memory)
+    {
         (bytes32 handle, bytes memory inputProof) = _encrypt(value, FheType.Uint256, user, target);
         return (externalEuint256.wrap(handle), inputProof);
     }
@@ -186,7 +199,10 @@ abstract contract FhevmTest is PlaintextDBMixin {
     /// @param value The clear address value to encrypt.
     /// @param user The user embedded in the input proof authorization.
     /// @param target The contract expected to call `FHE.fromExternal`.
-    function encryptAddress(address value, address user, address target) internal returns (externalEaddress, bytes memory) {
+    function encryptAddress(address value, address user, address target)
+        internal
+        returns (externalEaddress, bytes memory)
+    {
         (bytes32 handle, bytes memory inputProof) = _encrypt(uint256(uint160(value)), FheType.Uint160, user, target);
         return (externalEaddress.wrap(handle), inputProof);
     }
@@ -213,8 +229,9 @@ abstract contract FhevmTest is PlaintextDBMixin {
             _kmsVerifier.eip712Domain();
         bytes32 domainSeparator =
             KMSDecryptionProofHelper.computeKMSDecryptionDomainSeparator(name, version, chainId, verifyingContract);
-        bytes32 digest =
-            KMSDecryptionProofHelper.computeDecryptionDigest(handles, abiEncodedCleartexts, EMPTY_EXTRA_DATA, domainSeparator);
+        bytes32 digest = KMSDecryptionProofHelper.computeDecryptionDigest(
+            handles, abiEncodedCleartexts, EMPTY_EXTRA_DATA, domainSeparator
+        );
 
         bytes[] memory signatures = new bytes[](1);
         signatures[0] = _signDigest(MOCK_KMS_SIGNER_PK, digest);
@@ -438,12 +455,15 @@ abstract contract FhevmTest is PlaintextDBMixin {
         address emptyProxyImpl = address(new EmptyUUPSProxy());
 
         deployCodeTo(
-            ERC1967_PROXY_ARTIFACT, abi.encode(emptyProxyImpl, abi.encodeCall(EmptyUUPSProxy.initialize, ())), hcuLimitAdd
+            ERC1967_PROXY_ARTIFACT,
+            abi.encode(emptyProxyImpl, abi.encodeCall(EmptyUUPSProxy.initialize, ())),
+            hcuLimitAdd
         );
 
         address hcuLimitImpl = address(new HCULimit());
         vm.prank(PROXY_OWNER);
-        EmptyUUPSProxy(hcuLimitAdd).upgradeToAndCall(hcuLimitImpl, abi.encodeCall(HCULimit.initializeFromEmptyProxy, ()));
+        EmptyUUPSProxy(hcuLimitAdd)
+            .upgradeToAndCall(hcuLimitImpl, abi.encodeCall(HCULimit.initializeFromEmptyProxy, ()));
     }
 
     function _deployRealExecutor() internal {
@@ -457,10 +477,8 @@ abstract contract FhevmTest is PlaintextDBMixin {
 
         address executorImpl = address(new FHEVMExecutor());
         vm.prank(PROXY_OWNER);
-        EmptyUUPSProxy(fhevmExecutorAdd).upgradeToAndCall(
-            executorImpl,
-            abi.encodeCall(FHEVMExecutor.initializeFromEmptyProxy, ())
-        );
+        EmptyUUPSProxy(fhevmExecutorAdd)
+            .upgradeToAndCall(executorImpl, abi.encodeCall(FHEVMExecutor.initializeFromEmptyProxy, ()));
     }
 
     function _deployInputVerifier() internal {
@@ -477,10 +495,13 @@ abstract contract FhevmTest is PlaintextDBMixin {
         signers[0] = MOCK_INPUT_SIGNER;
 
         vm.prank(PROXY_OWNER);
-        EmptyUUPSProxy(inputVerifierAdd).upgradeToAndCall(
-            inputVerifierImpl,
-            abi.encodeCall(InputVerifier.initializeFromEmptyProxy, (inputVerifierAdd, uint64(block.chainid), signers, 1))
-        );
+        EmptyUUPSProxy(inputVerifierAdd)
+            .upgradeToAndCall(
+                inputVerifierImpl,
+                abi.encodeCall(
+                    InputVerifier.initializeFromEmptyProxy, (inputVerifierAdd, uint64(block.chainid), signers, 1)
+                )
+            );
     }
 
     function _deployKMSVerifier() internal {
@@ -497,10 +518,13 @@ abstract contract FhevmTest is PlaintextDBMixin {
         signers[0] = MOCK_KMS_SIGNER;
 
         vm.prank(PROXY_OWNER);
-        EmptyUUPSProxy(kmsVerifierAdd).upgradeToAndCall(
-            kmsVerifierImpl,
-            abi.encodeCall(KMSVerifier.initializeFromEmptyProxy, (kmsVerifierAdd, uint64(block.chainid), signers, 1))
-        );
+        EmptyUUPSProxy(kmsVerifierAdd)
+            .upgradeToAndCall(
+                kmsVerifierImpl,
+                abi.encodeCall(
+                    KMSVerifier.initializeFromEmptyProxy, (kmsVerifierAdd, uint64(block.chainid), signers, 1)
+                )
+            );
     }
 
     function _encrypt(uint256 value, FheType fheType, address user, address target)
@@ -518,8 +542,9 @@ abstract contract FhevmTest is PlaintextDBMixin {
         handles[0] = handle;
 
         bytes32 domainSeparator = InputProofHelper.computeInputVerifierDomainSeparator(inputVerifierAdd, block.chainid);
-        bytes32 digest =
-            InputProofHelper.computeInputVerificationDigest(handles, user, target, block.chainid, EMPTY_EXTRA_DATA, domainSeparator);
+        bytes32 digest = InputProofHelper.computeInputVerificationDigest(
+            handles, user, target, block.chainid, EMPTY_EXTRA_DATA, domainSeparator
+        );
 
         bytes[] memory signatures = new bytes[](1);
         signatures[0] = _signDigest(MOCK_INPUT_SIGNER_PK, digest);

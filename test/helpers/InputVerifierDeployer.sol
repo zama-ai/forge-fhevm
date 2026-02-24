@@ -9,8 +9,7 @@ import {ExecutorDeployer} from "./ExecutorDeployer.sol";
 abstract contract InputVerifierDeployer is ExecutorDeployer {
     InputVerifier internal inputVerifierContract;
 
-    uint256 internal constant MOCK_INPUT_SIGNER_PK =
-        0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80;
+    uint256 internal constant MOCK_INPUT_SIGNER_PK = 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80;
     address internal mockInputSigner;
 
     function _deployInputVerifierStack() internal {
@@ -33,10 +32,13 @@ abstract contract InputVerifierDeployer is ExecutorDeployer {
         signers[0] = mockInputSigner;
 
         vm.prank(OWNER);
-        EmptyUUPSProxy(inputVerifierAdd).upgradeToAndCall(
-            inputVerifierImpl,
-            abi.encodeCall(InputVerifier.initializeFromEmptyProxy, (inputVerifierAdd, uint64(block.chainid), signers, 1))
-        );
+        EmptyUUPSProxy(inputVerifierAdd)
+            .upgradeToAndCall(
+                inputVerifierImpl,
+                abi.encodeCall(
+                    InputVerifier.initializeFromEmptyProxy, (inputVerifierAdd, uint64(block.chainid), signers, 1)
+                )
+            );
 
         inputVerifierContract = InputVerifier(inputVerifierAdd);
     }

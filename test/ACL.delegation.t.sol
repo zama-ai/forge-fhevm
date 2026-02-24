@@ -60,7 +60,9 @@ contract ACLDelegationTest is ACLTestBase {
         uint64 expiry1 = uint64(block.timestamp + 3 hours);
         vm.startPrank(ALICE);
         aclContract.delegateForUserDecryption(BOB, DAPP, expiry0);
-        vm.expectRevert(abi.encodeWithSelector(ACL.AlreadyDelegatedOrRevokedInSameBlock.selector, ALICE, BOB, DAPP, block.number));
+        vm.expectRevert(
+            abi.encodeWithSelector(ACL.AlreadyDelegatedOrRevokedInSameBlock.selector, ALICE, BOB, DAPP, block.number)
+        );
         aclContract.delegateForUserDecryption(BOB, DAPP, expiry1);
         vm.stopPrank();
     }
@@ -70,7 +72,9 @@ contract ACLDelegationTest is ACLTestBase {
         vm.startPrank(ALICE);
         aclContract.delegateForUserDecryption(BOB, DAPP, expiry);
         vm.roll(block.number + 1);
-        vm.expectRevert(abi.encodeWithSelector(ACL.ExpirationDateAlreadySetToSameValue.selector, ALICE, BOB, DAPP, expiry));
+        vm.expectRevert(
+            abi.encodeWithSelector(ACL.ExpirationDateAlreadySetToSameValue.selector, ALICE, BOB, DAPP, expiry)
+        );
         aclContract.delegateForUserDecryption(BOB, DAPP, expiry);
         vm.stopPrank();
     }

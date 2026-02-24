@@ -42,7 +42,9 @@ contract FHEVMExecutorIntegrationTest is ExecutorDeployer {
     function test_aclAutoGrant_trivialEncrypt() public {
         bytes32 handle = executor.trivialEncrypt(42, FheType.Uint8);
         // After trivialEncrypt, this test contract should have transient permission
-        assertTrue(aclContract.allowedTransient(handle, address(this)), "Should have transient permission after trivialEncrypt");
+        assertTrue(
+            aclContract.allowedTransient(handle, address(this)), "Should have transient permission after trivialEncrypt"
+        );
     }
 
     function test_aclAutoGrant_binaryOp() public {
@@ -55,7 +57,9 @@ contract FHEVMExecutorIntegrationTest is ExecutorDeployer {
     function test_aclAutoGrant_unaryOp() public {
         bytes32 ct = _trivialEncrypt(5, FheType.Uint8);
         bytes32 result = executor.fheNeg(ct);
-        assertTrue(aclContract.allowedTransient(result, address(this)), "Should have transient permission on negation result");
+        assertTrue(
+            aclContract.allowedTransient(result, address(this)), "Should have transient permission on negation result"
+        );
     }
 
     // ──────────────────────────────────────────────
@@ -288,8 +292,7 @@ contract FHEVMExecutorIntegrationTest is ExecutorDeployer {
     function test_aclAutoGrant_fheRand() public {
         bytes32 result = executor.fheRand(FheType.Uint8);
         assertTrue(
-            aclContract.allowedTransient(result, address(this)),
-            "fheRand should grant transient permission on result"
+            aclContract.allowedTransient(result, address(this)), "fheRand should grant transient permission on result"
         );
     }
 
