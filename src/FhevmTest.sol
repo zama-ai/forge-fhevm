@@ -9,6 +9,8 @@ import {PauserSet} from "@fhevm/host-contracts/contracts/immutable/PauserSet.sol
 import {EmptyUUPSProxy} from "@fhevm/host-contracts/contracts/emptyProxy/EmptyUUPSProxy.sol";
 import {EmptyUUPSProxyACL} from "@fhevm/host-contracts/contracts/emptyProxyACL/EmptyUUPSProxyACL.sol";
 import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
+import {IERC7984ERC20Wrapper} from "@openzeppelin/confidential-contracts/interfaces/IERC7984ERC20Wrapper.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {
     aclAdd,
     fhevmExecutorAdd,
@@ -58,6 +60,18 @@ abstract contract FhevmTest is PlaintextDBMixin {
 
         vm.recordLogs();
         vm.getRecordedLogs();
+    }
+
+    /// @notice Funds `user` with wrapper underlying and wraps `amount` into confidential tokens.
+    /// @dev This is the confidential-token equivalent of Foundry's `deal`.
+    function dealConfidential(IERC7984ERC20Wrapper wrapper, address user, uint256 amount) internal {
+        IERC20 underlyingToken = IERC20(wrapper.underlying());
+        deal(address(underlyingToken), user, underlyingToken.balanceOf(user) + amount);
+
+        vm.startPrank(user);
+        underlyingToken.approve(address(wrapper), type(uint256).max);
+        wrapper.wrap(user, amount);
+        vm.stopPrank();
     }
 
     /// @notice Encrypts a boolean for the given target contract.
