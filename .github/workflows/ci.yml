@@ -37,6 +37,55 @@ jobs:
 
       - run: forge test -vvv
 
+  deploy:
+    name: Deploy (${{ matrix.backend }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        backend: [anvil, hardhat]
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          submodules: recursive
+
+      - uses: foundry-rs/foundry-toolchain@8789b3e21e6c11b2697f5eb56eddae542f746c10 # v1.7.0
+
+      - run: forge soldeer install
+
+      - run: forge build
+
+      - name: Setup Hardhat
+        if: matrix.backend == 'hardhat'
+        uses: actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a # v4.2.0
+        with:
+          node-version: 20
+
+      - name: Start node
+        run: |
+          if [[ "${{ matrix.backend }}" == "hardhat" ]]; then
+            echo 'module.exports = { networks: { hardhat: { mining: { auto: true } } } };' > hardhat.config.js
+            npx --yes hardhat node &
+          else
+            anvil &
+          fi
+          sleep 2
+
+      - name: Deploy
+        run: |
+          cp .env.example .env
+          BROADCAST=--broadcast ETCH_ZAMA_LOCAL_ADDRESSES=1 ./deploy.sh
+
+      - name: Validate
+        run: VALIDATE_ZAMA_ADDRESSES=1 ./script/validate-deployment.sh
+
+      - name: Cleanup
+        if: always()
+        run: |
+          if [[ "${{ matrix.backend }}" == "hardhat" ]]; then
+            rm -f hardhat.config.js
+          fi
+
   docs:
     name: Docs build
     runs-on: ubuntu-latest

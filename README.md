@@ -86,11 +86,13 @@ Full guides and API reference are available in the [docs](./docs/) directory (Vi
 
 The fhEVM host contracts are vendored in `src/fhevm-host/` because the upstream `fhevm` package generates `FHEVMHostAddresses.sol` at compile time, making it impossible to build as a regular dependency. Run `make update-host-contracts` (or `make update-host-contracts FHEVM_VERSION=v0.12.0`) to pull a new version.
 
-## Deploying a local stack on an Ethereum network
+## Deploying a cleartext FHEVM stack
 
-To deploy a local stack on an Ethereum network, you can use the `deploy.sh` script. Make sure to populate the `.env` file with the correct values (see `.env.example`). This script will deploy a modified version of the FHEVM contracts on the network and set the addresses in the `FHEVMHostAddresses.sol` file. In this modified version of FHEVM, the encrypted values are stored as plaintexts inside the smart contracts themselves; and can be retrieved from on-chain calls.
+The `deploy.sh` script deploys a cleartext version of the FHEVM contracts where encrypted values are stored as plaintexts on-chain. This is strictly for development/testing — nothing is actually encrypted. First, copy `.env.example` to `.env` and fill in the required values.
 
-This is strictly meant for development or testing purposes, as nothing is encrypted. Use this when working on local networks, in development or testing environments.
+For any Ethereum network (testnets, private chains), run `BROADCAST=--broadcast ./deploy.sh`. The contracts will be deployed at deterministic addresses based on your deployer's nonce, and `FHEVMHostAddresses.sol` will be updated accordingly.
+
+For local development with Anvil or Hardhat where you need compatibility with the hardcoded `ZamaConfig` addresses (chain ID 31337), run `BROADCAST=--broadcast ETCH_ZAMA_LOCAL_ADDRESSES=1 ./deploy.sh`. This deploys the stack and then mirrors it to the canonical Zama local addresses, so contracts using `ZamaConfig._getLocalConfig()` work out of the box.
 
 ## License
 
