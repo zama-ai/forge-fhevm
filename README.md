@@ -54,6 +54,7 @@ forge test
 **Encryption** -- `encryptBool`, `encryptUint8` through `encryptUint256`, and `encryptAddress`. Each returns an external handle and a signed input proof ready for `FHE.fromExternal`.
 
 **Decryption** -- Three modes depending on what you need to test:
+
 - `decrypt(handle)` reads the plaintext directly (no ACL checks, fastest for unit tests).
 - `publicDecrypt(handles)` checks the ACL decryption flag and returns cleartexts with a KMS-signed proof, matching the on-chain public decryption flow.
 - `userDecrypt(handle, user, contract, signature)` performs the full user-facing flow with persistent ACL checks and EIP-712 signature verification.
@@ -64,12 +65,12 @@ forge test
 
 Calling `super.setUp()` deploys all fhEVM host contracts at their canonical deterministic addresses:
 
-| Contract | Role |
-|---|---|
+| Contract          | Role                                                                        |
+| ----------------- | --------------------------------------------------------------------------- |
 | **FHEVMExecutor** | Processes FHE operations, emits events intercepted by the plaintext tracker |
-| **ACL** | Per-handle access control (transient and persistent permissions) |
-| **InputVerifier** | Verifies EIP-712 signed input proofs (threshold: 1 mock signer) |
-| **KMSVerifier** | Verifies EIP-712 signed decryption proofs (threshold: 1 mock signer) |
+| **ACL**           | Per-handle access control (transient and persistent permissions)            |
+| **InputVerifier** | Verifies EIP-712 signed input proofs (threshold: 1 mock signer)             |
+| **KMSVerifier**   | Verifies EIP-712 signed decryption proofs (threshold: 1 mock signer)        |
 
 ## Documentation
 
@@ -84,6 +85,14 @@ Full guides and API reference are available in the [docs](./docs/) directory (Vi
 ## Vendored host contracts
 
 The fhEVM host contracts are vendored in `src/fhevm-host/` because the upstream `fhevm` package generates `FHEVMHostAddresses.sol` at compile time, making it impossible to build as a regular dependency. Run `make update-host-contracts` (or `make update-host-contracts FHEVM_VERSION=v0.12.0`) to pull a new version.
+
+## Deploying a cleartext FHEVM stack
+
+The `deploy.sh` script deploys a cleartext version of the FHEVM contracts where encrypted values are stored as plaintexts on-chain. This is strictly for development/testing — nothing is actually encrypted. First, copy `.env.example` to `.env` and fill in the required values.
+
+For any Ethereum network (testnets, private chains), run `BROADCAST=--broadcast ./deploy.sh`. The contracts will be deployed at deterministic addresses based on your deployer's nonce, and `FHEVMHostAddresses.sol` will be updated accordingly.
+
+For local development with Anvil or Hardhat where you need compatibility with the hardcoded `ZamaConfig` addresses (chain ID 31337), run `BROADCAST=--broadcast ETCH_ZAMA_LOCAL_ADDRESSES=1 ./deploy.sh`. This deploys the stack and then mirrors it to the canonical Zama local addresses, so contracts using `ZamaConfig._getLocalConfig()` work out of the box.
 
 ## License
 

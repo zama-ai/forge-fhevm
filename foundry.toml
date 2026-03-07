@@ -5,6 +5,13 @@ libs = ["dependencies"]
 test = "test"
 solc = "0.8.27"
 evm_version = "cancun"
+optimizer = true
+optimizer_runs = 100
+cbor_metadata = false
+bytecode_hash = "none"
+fs_permissions = [
+    { access = "write", path = "src/fhevm-host/addresses/FHEVMHostAddresses.sol" },
+]
 
 [fuzz]
 runs = 256
