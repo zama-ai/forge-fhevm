@@ -59,17 +59,26 @@ jobs:
         if: matrix.backend == 'hardhat'
         uses: actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a # v4.2.0
         with:
-          node-version: 20
+          node-version: 22
+
+      - name: Install Hardhat
+        if: matrix.backend == 'hardhat'
+        run: |
+          npm pkg set type="module"
+          npm install --save-dev hardhat
 
       - name: Start node
         run: |
           if [[ "${{ matrix.backend }}" == "hardhat" ]]; then
-            echo 'module.exports = { networks: { hardhat: { mining: { auto: true } } } };' > hardhat.config.js
-            npx --yes hardhat node &
+            echo 'export default { networks: { hardhat: { mining: { auto: true } } } };' > hardhat.config.js
+            npx hardhat node &
           else
             anvil &
           fi
-          sleep 2
+          for i in $(seq 1 10); do
+            cast client --rpc-url http://localhost:8545 &>/dev/null && echo "Node ready." && break
+            sleep 1
+          done
 
       - name: Deploy
         run: |
