@@ -54,6 +54,7 @@ forge test
 **Encryption** -- `encryptBool`, `encryptUint8` through `encryptUint256`, and `encryptAddress`. Each returns an external handle and a signed input proof ready for `FHE.fromExternal`.
 
 **Decryption** -- Three modes depending on what you need to test:
+
 - `decrypt(handle)` reads the plaintext directly (no ACL checks, fastest for unit tests).
 - `publicDecrypt(handles)` checks the ACL decryption flag and returns cleartexts with a KMS-signed proof, matching the on-chain public decryption flow.
 - `userDecrypt(handle, user, contract, signature)` performs the full user-facing flow with persistent ACL checks and EIP-712 signature verification.
@@ -64,12 +65,12 @@ forge test
 
 Calling `super.setUp()` deploys all fhEVM host contracts at their canonical deterministic addresses:
 
-| Contract | Role |
-|---|---|
+| Contract          | Role                                                                        |
+| ----------------- | --------------------------------------------------------------------------- |
 | **FHEVMExecutor** | Processes FHE operations, emits events intercepted by the plaintext tracker |
-| **ACL** | Per-handle access control (transient and persistent permissions) |
-| **InputVerifier** | Verifies EIP-712 signed input proofs (threshold: 1 mock signer) |
-| **KMSVerifier** | Verifies EIP-712 signed decryption proofs (threshold: 1 mock signer) |
+| **ACL**           | Per-handle access control (transient and persistent permissions)            |
+| **InputVerifier** | Verifies EIP-712 signed input proofs (threshold: 1 mock signer)             |
+| **KMSVerifier**   | Verifies EIP-712 signed decryption proofs (threshold: 1 mock signer)        |
 
 ## Documentation
 
@@ -84,6 +85,12 @@ Full guides and API reference are available in the [docs](./docs/) directory (Vi
 ## Vendored host contracts
 
 The fhEVM host contracts are vendored in `src/fhevm-host/` because the upstream `fhevm` package generates `FHEVMHostAddresses.sol` at compile time, making it impossible to build as a regular dependency. Run `make update-host-contracts` (or `make update-host-contracts FHEVM_VERSION=v0.12.0`) to pull a new version.
+
+## Deploying a local stack on an Ethereum network
+
+To deploy a local stack on an Ethereum network, you can use the `deploy.sh` script. Make sure to populate the `.env` file with the correct values (see `.env.example`). This script will deploy a modified version of the FHEVM contracts on the network and set the addresses in the `FHEVMHostAddresses.sol` file. In this modified version of FHEVM, the encrypted values are stored as plaintexts inside the smart contracts themselves; and can be retrieved from on-chain calls.
+
+This is strictly meant for development or testing purposes, as nothing is encrypted. Use this when working on local networks, in development or testing environments.
 
 ## License
 

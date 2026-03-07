@@ -6,6 +6,8 @@ import {Vm} from "forge-std/Vm.sol";
 import {FHEEvents} from "@fhevm/host-contracts/contracts/FHEEvents.sol";
 import {fhevmExecutorAdd} from "@fhevm/host-contracts/addresses/FHEVMHostAddresses.sol";
 import {FheType} from "@fhevm/host-contracts/contracts/shared/FheType.sol";
+import {CleartextArithmetic} from "./cleartext/CleartextArithmetic.sol";
+import {FheTypeBitWidth} from "./cleartext/FheTypeBitWidth.sol";
 
 abstract contract PlaintextDBMixin is Test, FHEEvents {
     mapping(bytes32 => uint256) internal _plaintexts;
@@ -24,49 +26,49 @@ abstract contract PlaintextDBMixin is Test, FHEEvents {
         bytes32 selector = logEntry.topics[0];
 
         if (selector == FheAdd.selector) {
-            _handleAdd(logEntry.data);
+            _handleBinaryOp(logEntry.data, CleartextArithmetic.add);
         } else if (selector == FheSub.selector) {
-            _handleSub(logEntry.data);
+            _handleBinaryOp(logEntry.data, CleartextArithmetic.sub);
         } else if (selector == FheMul.selector) {
-            _handleMul(logEntry.data);
+            _handleBinaryOp(logEntry.data, CleartextArithmetic.mul);
         } else if (selector == FheDiv.selector) {
             _handleDiv(logEntry.data);
         } else if (selector == FheRem.selector) {
             _handleRem(logEntry.data);
         } else if (selector == FheBitAnd.selector) {
-            _handleBitAnd(logEntry.data);
+            _handleBinaryOp(logEntry.data, CleartextArithmetic.bitAnd);
         } else if (selector == FheBitOr.selector) {
-            _handleBitOr(logEntry.data);
+            _handleBinaryOp(logEntry.data, CleartextArithmetic.bitOr);
         } else if (selector == FheBitXor.selector) {
-            _handleBitXor(logEntry.data);
+            _handleBinaryOp(logEntry.data, CleartextArithmetic.bitXor);
         } else if (selector == FheShl.selector) {
-            _handleShl(logEntry.data);
+            _handleBinaryOp(logEntry.data, CleartextArithmetic.shl);
         } else if (selector == FheShr.selector) {
-            _handleShr(logEntry.data);
+            _handleBinaryOp(logEntry.data, CleartextArithmetic.shr);
         } else if (selector == FheRotl.selector) {
-            _handleRotl(logEntry.data);
+            _handleBinaryOp(logEntry.data, CleartextArithmetic.rotl);
         } else if (selector == FheRotr.selector) {
-            _handleRotr(logEntry.data);
+            _handleBinaryOp(logEntry.data, CleartextArithmetic.rotr);
         } else if (selector == FheEq.selector) {
-            _handleEq(logEntry.data);
+            _handleCmp(logEntry.data, _eq);
         } else if (selector == FheNe.selector) {
-            _handleNe(logEntry.data);
+            _handleCmp(logEntry.data, _ne);
         } else if (selector == FheGe.selector) {
-            _handleGe(logEntry.data);
+            _handleCmp(logEntry.data, _ge);
         } else if (selector == FheGt.selector) {
-            _handleGt(logEntry.data);
+            _handleCmp(logEntry.data, _gt);
         } else if (selector == FheLe.selector) {
-            _handleLe(logEntry.data);
+            _handleCmp(logEntry.data, _le);
         } else if (selector == FheLt.selector) {
-            _handleLt(logEntry.data);
+            _handleCmp(logEntry.data, _lt);
         } else if (selector == FheMin.selector) {
-            _handleMin(logEntry.data);
+            _handleCmp(logEntry.data, _min);
         } else if (selector == FheMax.selector) {
-            _handleMax(logEntry.data);
+            _handleCmp(logEntry.data, _max);
         } else if (selector == FheNeg.selector) {
-            _handleNeg(logEntry.data);
+            _handleUnaryOp(logEntry.data, CleartextArithmetic.neg);
         } else if (selector == FheNot.selector) {
-            _handleNot(logEntry.data);
+            _handleUnaryOp(logEntry.data, CleartextArithmetic.bitNot);
         } else if (selector == TrivialEncrypt.selector) {
             _handleTrivialEncrypt(logEntry.data);
         } else if (selector == Cast.selector) {
@@ -82,155 +84,84 @@ abstract contract PlaintextDBMixin is Test, FHEEvents {
         }
     }
 
+    // --- Binary arithmetic (lhs, rhs, scalarByte, result) ---
+
     function _loadBinaryOperands(bytes memory data)
         private
         view
-        returns (bytes32 lhs, bytes32 rhs, bytes1 scalarByte, bytes32 result, FheType operandType, uint256 a, uint256 b)
+        returns (bytes32 result, uint256 bitWidth, uint256 a, uint256 b)
     {
-        (lhs, rhs, scalarByte, result) = abi.decode(data, (bytes32, bytes32, bytes1, bytes32));
-        operandType = _typeOf(lhs);
-        a = _clamp(_plaintexts[lhs], operandType);
-        b = (scalarByte == 0x01) ? uint256(rhs) : _clamp(_plaintexts[rhs], operandType);
+        (bytes32 lhs, bytes32 rhs, bytes1 scalarByte, bytes32 res) =
+            abi.decode(data, (bytes32, bytes32, bytes1, bytes32));
+        result = res;
+        bitWidth = FheTypeBitWidth.bitWidthForType(uint8(_typeOf(lhs)));
+        a = CleartextArithmetic.clamp(_plaintexts[lhs], bitWidth);
+        b = (scalarByte == 0x01) ? uint256(rhs) : CleartextArithmetic.clamp(_plaintexts[rhs], bitWidth);
     }
 
-    function _handleAdd(bytes memory data) private {
-        (,,, bytes32 result, FheType t, uint256 a, uint256 b) = _loadBinaryOperands(data);
-        unchecked {
-            _plaintexts[result] = _clamp(a + b, t);
-        }
-    }
-
-    function _handleSub(bytes memory data) private {
-        (,,, bytes32 result, FheType t, uint256 a, uint256 b) = _loadBinaryOperands(data);
-        uint256 bitWidth = _bitWidthForType(t);
-        unchecked {
-            _plaintexts[result] = _clamp(a - b + (1 << bitWidth), t);
-        }
-    }
-
-    function _handleMul(bytes memory data) private {
-        (,,, bytes32 result, FheType t, uint256 a, uint256 b) = _loadBinaryOperands(data);
-        unchecked {
-            _plaintexts[result] = _clamp(a * b, t);
-        }
+    function _handleBinaryOp(bytes memory data, function(uint256, uint256, uint256) pure returns (uint256) op) private {
+        (bytes32 result, uint256 bw, uint256 a, uint256 b) = _loadBinaryOperands(data);
+        _plaintexts[result] = op(a, b, bw);
     }
 
     function _handleDiv(bytes memory data) private {
-        (,,, bytes32 result,, uint256 a, uint256 b) = _loadBinaryOperands(data);
+        (bytes32 result,, uint256 a, uint256 b) = _loadBinaryOperands(data);
         _plaintexts[result] = a / b;
     }
 
     function _handleRem(bytes memory data) private {
-        (,,, bytes32 result,, uint256 a, uint256 b) = _loadBinaryOperands(data);
+        (bytes32 result,, uint256 a, uint256 b) = _loadBinaryOperands(data);
         _plaintexts[result] = a % b;
     }
 
-    function _handleBitAnd(bytes memory data) private {
-        (,,, bytes32 result, FheType t, uint256 a, uint256 b) = _loadBinaryOperands(data);
-        _plaintexts[result] = _clamp(a & b, t);
+    // --- Comparison / select (same decoding, no bitWidth needed) ---
+
+    function _handleCmp(bytes memory data, function(uint256, uint256) pure returns (uint256) op) private {
+        (bytes32 result,, uint256 a, uint256 b) = _loadBinaryOperands(data);
+        _plaintexts[result] = op(a, b);
     }
 
-    function _handleBitOr(bytes memory data) private {
-        (,,, bytes32 result, FheType t, uint256 a, uint256 b) = _loadBinaryOperands(data);
-        _plaintexts[result] = _clamp(a | b, t);
+    function _eq(uint256 a, uint256 b) private pure returns (uint256) {
+        return (a == b) ? 1 : 0;
     }
 
-    function _handleBitXor(bytes memory data) private {
-        (,,, bytes32 result, FheType t, uint256 a, uint256 b) = _loadBinaryOperands(data);
-        _plaintexts[result] = _clamp(a ^ b, t);
+    function _ne(uint256 a, uint256 b) private pure returns (uint256) {
+        return (a != b) ? 1 : 0;
     }
 
-    function _handleShl(bytes memory data) private {
-        (,,, bytes32 result, FheType t, uint256 a, uint256 b) = _loadBinaryOperands(data);
-        uint256 bitWidth = _bitWidthForType(t);
-        _plaintexts[result] = _clamp(a << (b % bitWidth), t);
+    function _ge(uint256 a, uint256 b) private pure returns (uint256) {
+        return (a >= b) ? 1 : 0;
     }
 
-    function _handleShr(bytes memory data) private {
-        (,,, bytes32 result, FheType t, uint256 a, uint256 b) = _loadBinaryOperands(data);
-        uint256 bitWidth = _bitWidthForType(t);
-        _plaintexts[result] = _clamp(a >> (b % bitWidth), t);
+    function _gt(uint256 a, uint256 b) private pure returns (uint256) {
+        return (a > b) ? 1 : 0;
     }
 
-    function _handleRotl(bytes memory data) private {
-        (,,, bytes32 result, FheType t, uint256 a, uint256 b) = _loadBinaryOperands(data);
-        uint256 bitWidth = _bitWidthForType(t);
-        uint256 shift = b % bitWidth;
-        if (shift == 0) {
-            _plaintexts[result] = a;
-            return;
-        }
-        _plaintexts[result] = _clamp((a << shift) | (a >> (bitWidth - shift)), t);
+    function _le(uint256 a, uint256 b) private pure returns (uint256) {
+        return (a <= b) ? 1 : 0;
     }
 
-    function _handleRotr(bytes memory data) private {
-        (,,, bytes32 result, FheType t, uint256 a, uint256 b) = _loadBinaryOperands(data);
-        uint256 bitWidth = _bitWidthForType(t);
-        uint256 shift = b % bitWidth;
-        if (shift == 0) {
-            _plaintexts[result] = a;
-            return;
-        }
-        _plaintexts[result] = _clamp((a >> shift) | (a << (bitWidth - shift)), t);
+    function _lt(uint256 a, uint256 b) private pure returns (uint256) {
+        return (a < b) ? 1 : 0;
     }
 
-    function _handleEq(bytes memory data) private {
-        (,,, bytes32 result,, uint256 a, uint256 b) = _loadBinaryOperands(data);
-        _plaintexts[result] = (a == b) ? 1 : 0;
+    function _min(uint256 a, uint256 b) private pure returns (uint256) {
+        return (a < b) ? a : b;
     }
 
-    function _handleNe(bytes memory data) private {
-        (,,, bytes32 result,, uint256 a, uint256 b) = _loadBinaryOperands(data);
-        _plaintexts[result] = (a != b) ? 1 : 0;
+    function _max(uint256 a, uint256 b) private pure returns (uint256) {
+        return (a > b) ? a : b;
     }
 
-    function _handleGe(bytes memory data) private {
-        (,,, bytes32 result,, uint256 a, uint256 b) = _loadBinaryOperands(data);
-        _plaintexts[result] = (a >= b) ? 1 : 0;
-    }
+    // --- Unary (ct, result) ---
 
-    function _handleGt(bytes memory data) private {
-        (,,, bytes32 result,, uint256 a, uint256 b) = _loadBinaryOperands(data);
-        _plaintexts[result] = (a > b) ? 1 : 0;
-    }
-
-    function _handleLe(bytes memory data) private {
-        (,,, bytes32 result,, uint256 a, uint256 b) = _loadBinaryOperands(data);
-        _plaintexts[result] = (a <= b) ? 1 : 0;
-    }
-
-    function _handleLt(bytes memory data) private {
-        (,,, bytes32 result,, uint256 a, uint256 b) = _loadBinaryOperands(data);
-        _plaintexts[result] = (a < b) ? 1 : 0;
-    }
-
-    function _handleMin(bytes memory data) private {
-        (,,, bytes32 result,, uint256 a, uint256 b) = _loadBinaryOperands(data);
-        _plaintexts[result] = (a < b) ? a : b;
-    }
-
-    function _handleMax(bytes memory data) private {
-        (,,, bytes32 result,, uint256 a, uint256 b) = _loadBinaryOperands(data);
-        _plaintexts[result] = (a > b) ? a : b;
-    }
-
-    function _handleNeg(bytes memory data) private {
+    function _handleUnaryOp(bytes memory data, function(uint256, uint256) pure returns (uint256) op) private {
         (bytes32 ct, bytes32 result) = abi.decode(data, (bytes32, bytes32));
-        FheType t = _typeOf(ct);
-        uint256 value = _clamp(_plaintexts[ct], t);
-        unchecked {
-            _plaintexts[result] = _clamp(~value + 1, t);
-        }
+        uint256 bw = FheTypeBitWidth.bitWidthForType(uint8(_typeOf(ct)));
+        _plaintexts[result] = op(CleartextArithmetic.clamp(_plaintexts[ct], bw), bw);
     }
 
-    function _handleNot(bytes memory data) private {
-        (bytes32 ct, bytes32 result) = abi.decode(data, (bytes32, bytes32));
-        FheType t = _typeOf(ct);
-        uint256 value = _clamp(_plaintexts[ct], t);
-        uint256 bitWidth = _bitWidthForType(t);
-        uint256 mask = (bitWidth == 256) ? type(uint256).max : (1 << bitWidth) - 1;
-        _plaintexts[result] = ~value & mask;
-    }
+    // --- Misc ---
 
     function _handleTrivialEncrypt(bytes memory data) private {
         (uint256 pt,, bytes32 result) = abi.decode(data, (uint256, uint8, bytes32));
@@ -239,7 +170,7 @@ abstract contract PlaintextDBMixin is Test, FHEEvents {
 
     function _handleCast(bytes memory data) private {
         (bytes32 ct, uint8 toTypeRaw, bytes32 result) = abi.decode(data, (bytes32, uint8, bytes32));
-        _plaintexts[result] = _clamp(_plaintexts[ct], FheType(toTypeRaw));
+        _plaintexts[result] = CleartextArithmetic.clamp(_plaintexts[ct], FheTypeBitWidth.bitWidthForType(toTypeRaw));
     }
 
     function _handleIfThenElse(bytes memory data) private {
@@ -250,14 +181,12 @@ abstract contract PlaintextDBMixin is Test, FHEEvents {
 
     function _handleRand(bytes memory data) private {
         (uint8 randTypeRaw, bytes16 seed, bytes32 result) = abi.decode(data, (uint8, bytes16, bytes32));
-        uint256 randomValue = uint256(keccak256(abi.encodePacked(seed, "randValue")));
-        _plaintexts[result] = _clamp(randomValue, FheType(randTypeRaw));
+        _plaintexts[result] = CleartextArithmetic.rand(seed, FheTypeBitWidth.bitWidthForType(randTypeRaw));
     }
 
     function _handleRandBounded(bytes memory data) private {
         (uint256 upperBound,, bytes16 seed, bytes32 result) = abi.decode(data, (uint256, uint8, bytes16, bytes32));
-        uint256 randomValue = uint256(keccak256(abi.encodePacked(seed, "randBoundedValue")));
-        _plaintexts[result] = randomValue % upperBound;
+        _plaintexts[result] = CleartextArithmetic.randBounded(seed, upperBound);
     }
 
     function _handleVerifyInput(bytes memory data) private pure {
@@ -265,27 +194,10 @@ abstract contract PlaintextDBMixin is Test, FHEEvents {
         assert(inputHandle == result);
     }
 
-    function _typeOf(bytes32 handle) internal pure returns (FheType typeCt) {
-        typeCt = FheType(uint8(handle[30]));
-    }
+    // --- Shared helpers ---
 
-    function _bitWidthForType(FheType fheType) internal pure returns (uint256) {
-        if (fheType == FheType.Bool) return 1;
-        if (fheType == FheType.Uint4) return 4;
-        if (fheType == FheType.Uint8) return 8;
-        if (fheType == FheType.Uint16) return 16;
-        if (fheType == FheType.Uint32) return 32;
-        if (fheType == FheType.Uint64) return 64;
-        if (fheType == FheType.Uint128) return 128;
-        if (fheType == FheType.Uint160) return 160;
-        if (fheType == FheType.Uint256) return 256;
-        revert();
-    }
-
-    function _clamp(uint256 value, FheType fheType) internal pure returns (uint256) {
-        uint256 bitWidth = _bitWidthForType(fheType);
-        if (bitWidth == 256) return value;
-        return value & ((1 << bitWidth) - 1);
+    function _typeOf(bytes32 handle) internal pure returns (FheType) {
+        return FheType(uint8(handle[30]));
     }
 
     function _seedPlaintext(bytes32 handle, uint256 value) internal {
