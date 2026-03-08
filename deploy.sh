@@ -20,8 +20,6 @@
 #   PAUSER_ADDRESS_0
 #   BROADCAST (set to "--broadcast" to send live transactions)
 #   VERIFY    (set to "--verify" to verify on Etherscan)
-#   ETCH_ZAMA_LOCAL_ADDRESSES=1  (after deploy, mirror the stack to Zama localConfig addresses)
-#   LOCAL_STATE_RPC_NAMESPACE     (optional override: "anvil" or "hardhat")
 # =============================================================================
 set -euo pipefail
 
@@ -48,7 +46,6 @@ require_one_of \
 
 BROADCAST="${BROADCAST:-}"
 VERIFY="${VERIFY:-}"
-ETCH_ZAMA_LOCAL_ADDRESSES="${ETCH_ZAMA_LOCAL_ADDRESSES:-0}"
 
 echo "============================================================"
 echo "Phase 1: Computing proxy addresses"
@@ -88,24 +85,4 @@ fi
 
 echo ""
 echo "Deployment complete."
-
-if is_truthy "$ETCH_ZAMA_LOCAL_ADDRESSES"; then
-    if [[ "$BROADCAST" != "--broadcast" ]]; then
-        echo "Error: ETCH_ZAMA_LOCAL_ADDRESSES requires BROADCAST=--broadcast so Phase 2 is persisted on-chain." >&2
-        exit 1
-    fi
-
-    LOCAL_STATE_RPC_NAMESPACE="$(resolve_local_state_rpc_namespace)"
-    export LOCAL_STATE_RPC_NAMESPACE
-
-    echo ""
-    echo "============================================================"
-    echo "Phase 3: Mirroring deployment to Zama localConfig addresses"
-    echo "============================================================"
-    echo "Using local-state RPC namespace: ${LOCAL_STATE_RPC_NAMESPACE}"
-
-    ./script/etch-zama-addresses.sh
-
-    echo ""
-    echo "Zama localConfig addresses updated."
-fi
+echo "For local fixed-address deployment, use ./deploy-local.sh."
