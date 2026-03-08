@@ -25,6 +25,12 @@ git = "https://github.com/confidential-token-association/encrypted-types.git"
 rev = "2d97522979fdf00f3dbb5ab7d1ade3b49c07f795"
 
 [[dependencies]]
+name = "fhevm"
+version = "0.11.1"
+git = "https://github.com/zama-ai/fhevm.git"
+rev = "2458fa9c2c78b7d84ef55ff0754f6bd80c4a15f6"
+
+[[dependencies]]
 name = "forge-std"
 version = "1.14.0"
 url = "https://soldeer-revisions.s3.amazonaws.com/forge-std/1_14_0_05-01-2026_15:24:39_forge-std-1.14.zip"

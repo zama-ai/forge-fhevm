@@ -14,7 +14,6 @@ load_dotenv_if_present "$REPO_ROOT/.env"
 
 VALIDATE_ZAMA_ADDRESSES="${VALIDATE_ZAMA_ADDRESSES:-0}"
 
-ADDRESSES_FILE="$REPO_ROOT/src/fhevm-host/addresses/FHEVMHostAddresses.sol"
 ERC1967_IMPL_SLOT="0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc"
 
 ZAMA_ACL="0x50157CFfD6bBFA2DECe204a89ec419c23ef5755D"
@@ -51,19 +50,14 @@ assert_has_impl() {
     echo "OK:   $label ($address) impl=$impl"
 }
 
-extract_address_constant() {
-    local name="$1"
-    sed -n "s/address constant ${name} = address(\\(0x[0-9A-Fa-f]*\\));/\\1/p" "$ADDRESSES_FILE"
-}
-
 echo "=== Validating deployed addresses (FHEVMHostAddresses.sol) ==="
 
-ACL_ADD="$(extract_address_constant aclAdd)"
-EXECUTOR_ADD="$(extract_address_constant fhevmExecutorAdd)"
-KMS_ADD="$(extract_address_constant kmsVerifierAdd)"
-IV_ADD="$(extract_address_constant inputVerifierAdd)"
-HCU_ADD="$(extract_address_constant hcuLimitAdd)"
-PAUSER_ADD="$(extract_address_constant pauserSetAdd)"
+ACL_ADD="$(extract_address_constant_from_file aclAdd)"
+EXECUTOR_ADD="$(extract_address_constant_from_file fhevmExecutorAdd)"
+KMS_ADD="$(extract_address_constant_from_file kmsVerifierAdd)"
+IV_ADD="$(extract_address_constant_from_file inputVerifierAdd)"
+HCU_ADD="$(extract_address_constant_from_file hcuLimitAdd)"
+PAUSER_ADD="$(extract_address_constant_from_file pauserSetAdd)"
 
 for pair in \
     "ACL:$ACL_ADD" \
