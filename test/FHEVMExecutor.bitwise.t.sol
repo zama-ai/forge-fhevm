@@ -121,6 +121,12 @@ contract FHEVMExecutorBitwiseTest is ExecutorDeployer {
         assertEq(_readPlaintext(result), 127);
     }
 
+    function test_fheShr_uses_raw_dirty_lhs_like_mocks() public {
+        bytes32 lhs = _trivialEncrypt(300, FheType.Uint8);
+        bytes32 result = executor.fheShr(lhs, bytes32(uint256(1)), bytes1(0x01));
+        assertEq(_readPlaintext(result), 150);
+    }
+
     // ──────────────────────────────────────────────
     //  fheRotl
     // ──────────────────────────────────────────────
@@ -141,6 +147,12 @@ contract FHEVMExecutorBitwiseTest is ExecutorDeployer {
         assertEq(_readPlaintext(result), 42);
     }
 
+    function test_fheRotl_uses_raw_dirty_lhs_like_mocks() public {
+        bytes32 lhs = _trivialEncrypt(300, FheType.Uint8);
+        bytes32 result = executor.fheRotl(lhs, bytes32(uint256(1)), bytes1(0x01));
+        assertEq(_readPlaintext(result), 90);
+    }
+
     // ──────────────────────────────────────────────
     //  fheRotr
     // ──────────────────────────────────────────────
@@ -157,6 +169,12 @@ contract FHEVMExecutorBitwiseTest is ExecutorDeployer {
         bytes32 lhs = _trivialEncrypt(42, FheType.Uint8);
         bytes32 result = executor.fheRotr(lhs, bytes32(uint256(8)), bytes1(0x01));
         assertEq(_readPlaintext(result), 42);
+    }
+
+    function test_fheRotr_uses_raw_dirty_lhs_like_mocks() public {
+        bytes32 lhs = _trivialEncrypt(300, FheType.Uint8);
+        bytes32 result = executor.fheRotr(lhs, bytes32(uint256(1)), bytes1(0x01));
+        assertEq(_readPlaintext(result), 150);
     }
 
     // ──────────────────────────────────────────────

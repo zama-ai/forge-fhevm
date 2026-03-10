@@ -10,6 +10,13 @@ contract FHEVMExecutorSpecialTest is ExecutorDeployer {
         _deployExecutorStack();
     }
 
+    /// @dev `_readPlaintext` is internal, but the non-canonical control failure is
+    ///      triggered while processing executor logs inside that helper. Expose a
+    ///      public wrapper so Foundry can observe the revert through an external call.
+    function readPlaintest(bytes32 handle) public returns (uint256) {
+        return _readPlaintext(handle);
+    }
+
     // ──────────────────────────────────────────────
     //  trivialEncrypt
     // ──────────────────────────────────────────────
@@ -129,6 +136,17 @@ contract FHEVMExecutorSpecialTest is ExecutorDeployer {
         bytes32 ifFalse = _trivialEncrypt(uint256(uint160(address(0xbeef))), FheType.Uint160);
         bytes32 result = executor.fheIfThenElse(control, ifTrue, ifFalse);
         assertEq(_readPlaintext(result), uint256(uint160(address(0xdead))));
+    }
+
+    function test_fheIfThenElse_reverts_on_noncanonical_bool_control_like_mocks() public {
+        bytes32 control = _trivialEncrypt(3, FheType.Bool);
+        bytes32 ifTrue = _trivialEncrypt(11, FheType.Uint8);
+        bytes32 ifFalse = _trivialEncrypt(22, FheType.Uint8);
+
+        bytes32 result = executor.fheIfThenElse(control, ifTrue, ifFalse);
+
+        vm.expectRevert(bytes("Unexpected FheIfThenElse control value"));
+        _readPlaintext(result);
     }
 
     // ──────────────────────────────────────────────

@@ -121,7 +121,13 @@ library CleartextArithmetic {
     // or the stored plaintext when encrypted.
     // -----------------------------------------------------------------------
 
-    function _resolveBinaryOperands(uint256 lhsRaw, uint256 rhsRaw, uint8 fheType, bytes1 scalarByte)
+    /// @dev Resolve operands using normalized FHE semantics:
+    ///      - lhs is clamped to the handle `FheType` bit-width
+    ///      - encrypted rhs is clamped to the same `FheType` bit-width
+    ///      - scalar rhs is taken as-is
+    ///      Use this for operations where the mock/reference semantics first
+    ///      interpret stored plaintexts as canonical values of the handle `FheType`.
+    function _resolveNormalizedBinaryOperands(uint256 lhsRaw, uint256 rhsRaw, uint8 fheType, bytes1 scalarByte)
         private
         pure
         returns (uint256 a, uint256 b, uint256 bw)
@@ -131,30 +137,49 @@ library CleartextArithmetic {
         b = (scalarByte == 0x01) ? rhsRaw : clamp(rhsRaw, bw);
     }
 
+    /// @dev Resolve operands using stored-plaintext semantics:
+    ///      - lhs is used exactly as stored
+    ///      - rhs is used exactly as provided/stored
+    ///      - width is returned so callers can clamp only the final result when needed
+    ///      Use this for operations where fhevm-mocks reads raw DB values without
+    ///      first canonicalizing them to the ciphertext width.
+    function _resolveStoredBinaryOperands(uint256 lhsRaw, uint256 rhsRaw, uint8 fheType, bytes1 /*scalarByte*/)
+        private
+        pure
+        returns (uint256 a, uint256 b, uint256 bw)
+    {
+        bw = FheTypeBitWidth.bitWidthForType(fheType);
+        a = lhsRaw;
+        b = rhsRaw;
+    }
+
     // --- Binary arithmetic ---
 
     function fheAdd(uint256 lhsRaw, uint256 rhsRaw, uint8 fheType, bytes1 scalarByte) internal pure returns (uint256) {
-        (uint256 a, uint256 b, uint256 bw) = _resolveBinaryOperands(lhsRaw, rhsRaw, fheType, scalarByte);
+        (uint256 a, uint256 b, uint256 bw) =
+            _resolveNormalizedBinaryOperands(lhsRaw, rhsRaw, fheType, scalarByte);
         return add(a, b, bw);
     }
 
     function fheSub(uint256 lhsRaw, uint256 rhsRaw, uint8 fheType, bytes1 scalarByte) internal pure returns (uint256) {
-        (uint256 a, uint256 b, uint256 bw) = _resolveBinaryOperands(lhsRaw, rhsRaw, fheType, scalarByte);
+        (uint256 a, uint256 b, uint256 bw) =
+            _resolveNormalizedBinaryOperands(lhsRaw, rhsRaw, fheType, scalarByte);
         return sub(a, b, bw);
     }
 
     function fheMul(uint256 lhsRaw, uint256 rhsRaw, uint8 fheType, bytes1 scalarByte) internal pure returns (uint256) {
-        (uint256 a, uint256 b, uint256 bw) = _resolveBinaryOperands(lhsRaw, rhsRaw, fheType, scalarByte);
+        (uint256 a, uint256 b, uint256 bw) =
+            _resolveNormalizedBinaryOperands(lhsRaw, rhsRaw, fheType, scalarByte);
         return mul(a, b, bw);
     }
 
     function fheDiv(uint256 lhsRaw, uint256 rhsRaw, uint8 fheType, bytes1 scalarByte) internal pure returns (uint256) {
-        (uint256 a, uint256 b,) = _resolveBinaryOperands(lhsRaw, rhsRaw, fheType, scalarByte);
+        (uint256 a, uint256 b,) = _resolveStoredBinaryOperands(lhsRaw, rhsRaw, fheType, scalarByte);
         return a / b;
     }
 
     function fheRem(uint256 lhsRaw, uint256 rhsRaw, uint8 fheType, bytes1 scalarByte) internal pure returns (uint256) {
-        (uint256 a, uint256 b,) = _resolveBinaryOperands(lhsRaw, rhsRaw, fheType, scalarByte);
+        (uint256 a, uint256 b,) = _resolveStoredBinaryOperands(lhsRaw, rhsRaw, fheType, scalarByte);
         return a % b;
     }
 
@@ -165,7 +190,8 @@ library CleartextArithmetic {
         pure
         returns (uint256)
     {
-        (uint256 a, uint256 b, uint256 bw) = _resolveBinaryOperands(lhsRaw, rhsRaw, fheType, scalarByte);
+        (uint256 a, uint256 b, uint256 bw) =
+            _resolveNormalizedBinaryOperands(lhsRaw, rhsRaw, fheType, scalarByte);
         return bitAnd(a, b, bw);
     }
 
@@ -174,7 +200,8 @@ library CleartextArithmetic {
         pure
         returns (uint256)
     {
-        (uint256 a, uint256 b, uint256 bw) = _resolveBinaryOperands(lhsRaw, rhsRaw, fheType, scalarByte);
+        (uint256 a, uint256 b, uint256 bw) =
+            _resolveNormalizedBinaryOperands(lhsRaw, rhsRaw, fheType, scalarByte);
         return bitOr(a, b, bw);
     }
 
@@ -183,73 +210,75 @@ library CleartextArithmetic {
         pure
         returns (uint256)
     {
-        (uint256 a, uint256 b, uint256 bw) = _resolveBinaryOperands(lhsRaw, rhsRaw, fheType, scalarByte);
+        (uint256 a, uint256 b, uint256 bw) =
+            _resolveNormalizedBinaryOperands(lhsRaw, rhsRaw, fheType, scalarByte);
         return bitXor(a, b, bw);
     }
 
     // --- Shifts / rotates ---
 
     function fheShl(uint256 lhsRaw, uint256 rhsRaw, uint8 fheType, bytes1 scalarByte) internal pure returns (uint256) {
-        (uint256 a, uint256 b, uint256 bw) = _resolveBinaryOperands(lhsRaw, rhsRaw, fheType, scalarByte);
+        (uint256 a, uint256 b, uint256 bw) =
+            _resolveNormalizedBinaryOperands(lhsRaw, rhsRaw, fheType, scalarByte);
         return shl(a, b, bw);
     }
 
     function fheShr(uint256 lhsRaw, uint256 rhsRaw, uint8 fheType, bytes1 scalarByte) internal pure returns (uint256) {
-        (uint256 a, uint256 b, uint256 bw) = _resolveBinaryOperands(lhsRaw, rhsRaw, fheType, scalarByte);
+        (uint256 a, uint256 b, uint256 bw) = _resolveStoredBinaryOperands(lhsRaw, rhsRaw, fheType, scalarByte);
         return shr(a, b, bw);
     }
 
     function fheRotl(uint256 lhsRaw, uint256 rhsRaw, uint8 fheType, bytes1 scalarByte) internal pure returns (uint256) {
-        (uint256 a, uint256 b, uint256 bw) = _resolveBinaryOperands(lhsRaw, rhsRaw, fheType, scalarByte);
+        (uint256 a, uint256 b, uint256 bw) = _resolveStoredBinaryOperands(lhsRaw, rhsRaw, fheType, scalarByte);
         return rotl(a, b, bw);
     }
 
     function fheRotr(uint256 lhsRaw, uint256 rhsRaw, uint8 fheType, bytes1 scalarByte) internal pure returns (uint256) {
-        (uint256 a, uint256 b, uint256 bw) = _resolveBinaryOperands(lhsRaw, rhsRaw, fheType, scalarByte);
+        (uint256 a, uint256 b, uint256 bw) = _resolveStoredBinaryOperands(lhsRaw, rhsRaw, fheType, scalarByte);
         return rotr(a, b, bw);
     }
 
     // --- Comparisons ---
 
     function fheEq(uint256 lhsRaw, uint256 rhsRaw, uint8 fheType, bytes1 scalarByte) internal pure returns (uint256) {
-        (uint256 a, uint256 b,) = _resolveBinaryOperands(lhsRaw, rhsRaw, fheType, scalarByte);
+        (uint256 a, uint256 b,) = _resolveNormalizedBinaryOperands(lhsRaw, rhsRaw, fheType, scalarByte);
         return (a == b) ? 1 : 0;
     }
 
     function fheNe(uint256 lhsRaw, uint256 rhsRaw, uint8 fheType, bytes1 scalarByte) internal pure returns (uint256) {
-        (uint256 a, uint256 b,) = _resolveBinaryOperands(lhsRaw, rhsRaw, fheType, scalarByte);
+        (uint256 a, uint256 b,) = _resolveNormalizedBinaryOperands(lhsRaw, rhsRaw, fheType, scalarByte);
         return (a != b) ? 1 : 0;
     }
 
     function fheGe(uint256 lhsRaw, uint256 rhsRaw, uint8 fheType, bytes1 scalarByte) internal pure returns (uint256) {
-        (uint256 a, uint256 b,) = _resolveBinaryOperands(lhsRaw, rhsRaw, fheType, scalarByte);
+        (uint256 a, uint256 b,) = _resolveStoredBinaryOperands(lhsRaw, rhsRaw, fheType, scalarByte);
         return (a >= b) ? 1 : 0;
     }
 
     function fheGt(uint256 lhsRaw, uint256 rhsRaw, uint8 fheType, bytes1 scalarByte) internal pure returns (uint256) {
-        (uint256 a, uint256 b,) = _resolveBinaryOperands(lhsRaw, rhsRaw, fheType, scalarByte);
+        (uint256 a, uint256 b,) = _resolveStoredBinaryOperands(lhsRaw, rhsRaw, fheType, scalarByte);
         return (a > b) ? 1 : 0;
     }
 
     function fheLe(uint256 lhsRaw, uint256 rhsRaw, uint8 fheType, bytes1 scalarByte) internal pure returns (uint256) {
-        (uint256 a, uint256 b,) = _resolveBinaryOperands(lhsRaw, rhsRaw, fheType, scalarByte);
+        (uint256 a, uint256 b,) = _resolveStoredBinaryOperands(lhsRaw, rhsRaw, fheType, scalarByte);
         return (a <= b) ? 1 : 0;
     }
 
     function fheLt(uint256 lhsRaw, uint256 rhsRaw, uint8 fheType, bytes1 scalarByte) internal pure returns (uint256) {
-        (uint256 a, uint256 b,) = _resolveBinaryOperands(lhsRaw, rhsRaw, fheType, scalarByte);
+        (uint256 a, uint256 b,) = _resolveStoredBinaryOperands(lhsRaw, rhsRaw, fheType, scalarByte);
         return (a < b) ? 1 : 0;
     }
 
     // --- Min / Max ---
 
     function fheMin(uint256 lhsRaw, uint256 rhsRaw, uint8 fheType, bytes1 scalarByte) internal pure returns (uint256) {
-        (uint256 a, uint256 b,) = _resolveBinaryOperands(lhsRaw, rhsRaw, fheType, scalarByte);
+        (uint256 a, uint256 b,) = _resolveStoredBinaryOperands(lhsRaw, rhsRaw, fheType, scalarByte);
         return (a < b) ? a : b;
     }
 
     function fheMax(uint256 lhsRaw, uint256 rhsRaw, uint8 fheType, bytes1 scalarByte) internal pure returns (uint256) {
-        (uint256 a, uint256 b,) = _resolveBinaryOperands(lhsRaw, rhsRaw, fheType, scalarByte);
+        (uint256 a, uint256 b,) = _resolveStoredBinaryOperands(lhsRaw, rhsRaw, fheType, scalarByte);
         return (a > b) ? a : b;
     }
 
@@ -268,6 +297,7 @@ library CleartextArithmetic {
     // --- Special ---
 
     function fheIfThenElse(uint256 control, uint256 ifTrue, uint256 ifFalse) internal pure returns (uint256) {
+        require(control == 0 || control == 1, "Unexpected FheIfThenElse control value");
         return (control == 1) ? ifTrue : ifFalse;
     }
 
