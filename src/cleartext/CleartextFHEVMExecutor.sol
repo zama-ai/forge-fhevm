@@ -224,6 +224,8 @@ contract CleartextFHEVMExecutor is FHEVMExecutor {
         plaintexts[result] = CleartextArithmetic.randBounded(seed, upperBound);
     }
 
+    /// @dev Resolves the raw RHS value from storage or handle; scalar normalization
+    ///      is deferred to `_resolveBinaryOperands` in the pure arithmetic library.
     function _rhsValue(bytes32 rhs, bytes1 scalarByte) private view returns (uint256) {
         return (scalarByte == 0x01) ? uint256(rhs) : plaintexts[rhs];
     }

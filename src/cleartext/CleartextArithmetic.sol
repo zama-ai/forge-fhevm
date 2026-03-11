@@ -294,6 +294,8 @@ library CleartextArithmetic {
 
     // --- Special ---
 
+    /// @dev The require is a guardrail, not a semantic check: all storage paths normalize bools,
+    ///      and the real coprocessor's FheBool cannot carry a non-canonical payload.
     function fheIfThenElse(uint256 control, uint256 ifTrue, uint256 ifFalse) internal pure returns (uint256) {
         require(control == 0 || control == 1, "Unexpected FheIfThenElse control value");
         return (control == 1) ? ifTrue : ifFalse;
