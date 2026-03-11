@@ -22,6 +22,13 @@ contract FHEVMExecutorComparisonTest is ExecutorDeployer {
         assertEq(uint8(result[30]), uint8(FheType.Bool));
     }
 
+    function test_fheEq_scalar_truncates_rhs() public {
+        // Scalar 261 truncates to 5 for euint8, so 5 == 5.
+        bytes32 lhs = _trivialEncrypt(5, FheType.Uint8);
+        bytes32 result = executor.fheEq(lhs, bytes32(uint256(261)), bytes1(0x01));
+        assertEq(_readPlaintext(result), 1);
+    }
+
     function test_fheEq_false() public {
         bytes32 lhs = _trivialEncrypt(42, FheType.Uint8);
         bytes32 result = executor.fheEq(lhs, bytes32(uint256(43)), bytes1(0x01));
@@ -39,6 +46,12 @@ contract FHEVMExecutorComparisonTest is ExecutorDeployer {
         bytes32 lhs = _trivialEncrypt(1, FheType.Bool);
         bytes32 rhs = _trivialEncrypt(1, FheType.Bool);
         bytes32 result = executor.fheEq(lhs, rhs, bytes1(0x00));
+        assertEq(_readPlaintext(result), 1);
+    }
+
+    function test_fheEq_bool_scalar_high_byte_nonzero_is_true() public {
+        bytes32 lhs = _trivialEncrypt(1, FheType.Bool);
+        bytes32 result = executor.fheEq(lhs, bytes32(uint256(0x0100)), bytes1(0x01));
         assertEq(_readPlaintext(result), 1);
     }
 
@@ -62,6 +75,12 @@ contract FHEVMExecutorComparisonTest is ExecutorDeployer {
         bytes32 lhs = _trivialEncrypt(uint256(uint160(address(0xdead))), FheType.Uint160);
         bytes32 result = executor.fheNe(lhs, bytes32(uint256(uint160(address(0xbeef)))), bytes1(0x01));
         assertEq(_readPlaintext(result), 1);
+    }
+
+    function test_fheNe_bool_scalar_high_byte_nonzero_is_true() public {
+        bytes32 lhs = _trivialEncrypt(1, FheType.Bool);
+        bytes32 result = executor.fheNe(lhs, bytes32(uint256(0x0100)), bytes1(0x01));
+        assertEq(_readPlaintext(result), 0);
     }
 
     // ──────────────────────────────────────────────
@@ -105,6 +124,14 @@ contract FHEVMExecutorComparisonTest is ExecutorDeployer {
     function test_fheGt_equal() public {
         bytes32 lhs = _trivialEncrypt(10, FheType.Uint8);
         bytes32 result = executor.fheGt(lhs, bytes32(uint256(10)), bytes1(0x01));
+        assertEq(_readPlaintext(result), 0);
+    }
+
+    function test_fheGt_truncated_input() public {
+        // trivialEncrypt(300, u8) truncates to 44. scalar 100 truncates to 100.
+        // 44 > 100 → false
+        bytes32 lhs = _trivialEncrypt(300, FheType.Uint8);
+        bytes32 result = executor.fheGt(lhs, bytes32(uint256(100)), bytes1(0x01));
         assertEq(_readPlaintext(result), 0);
     }
 
@@ -166,11 +193,27 @@ contract FHEVMExecutorComparisonTest is ExecutorDeployer {
         assertEq(_readPlaintext(result), 100);
     }
 
+    function test_fheMin_truncated_input() public {
+        // trivialEncrypt(300, u8) truncates to 44. scalar 100 truncates to 100.
+        // min(44, 100) = 44
+        bytes32 lhs = _trivialEncrypt(300, FheType.Uint8);
+        bytes32 result = executor.fheMin(lhs, bytes32(uint256(100)), bytes1(0x01));
+        assertEq(_readPlaintext(result), 44);
+    }
+
     function test_fheMax_encEnc() public {
         bytes32 lhs = _trivialEncrypt(100, FheType.Uint64);
         bytes32 rhs = _trivialEncrypt(200, FheType.Uint64);
         bytes32 result = executor.fheMax(lhs, rhs, bytes1(0x00));
         assertEq(_readPlaintext(result), 200);
+    }
+
+    function test_fheMax_truncated_input() public {
+        // trivialEncrypt(300, u8) truncates to 44. scalar 100 truncates to 100.
+        // max(44, 100) = 100
+        bytes32 lhs = _trivialEncrypt(300, FheType.Uint8);
+        bytes32 result = executor.fheMax(lhs, bytes32(uint256(100)), bytes1(0x01));
+        assertEq(_readPlaintext(result), 100);
     }
 
     // ──────────────────────────────────────────────

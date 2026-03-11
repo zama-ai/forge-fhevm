@@ -27,10 +27,22 @@ contract FHEVMExecutorSpecialTest is ExecutorDeployer {
         assertEq(handle1, handle2);
     }
 
-    function test_trivialEncrypt_noClamping() public {
-        // trivialEncrypt stores raw value without clamping
+    function test_trivialEncrypt_truncates() public {
+        // Real coprocessor truncates plaintext to target type's bit-width.
+        // 300 = 0x012C → last byte = 0x2C = 44
         bytes32 handle = executor.trivialEncrypt(300, FheType.Uint8);
-        assertEq(_readPlaintext(handle), 300, "Should store 300, not 44 (clamped)");
+        assertEq(_readPlaintext(handle), 44, "Should truncate 300 to 44 for euint8");
+    }
+
+    function test_trivialEncrypt_bool_nonzero_is_true() public {
+        // tfhe-rs trivial bool encryption uses `last_byte > 0`, not `value & 1`.
+        bytes32 handle = executor.trivialEncrypt(2, FheType.Bool);
+        assertEq(_readPlaintext(handle), 1, "Non-zero bool plaintext should normalize to true");
+    }
+
+    function test_trivialEncrypt_bool_high_byte_only_is_false() public {
+        bytes32 handle = executor.trivialEncrypt(0x0100, FheType.Bool);
+        assertEq(_readPlaintext(handle), 0, "Bool trivialEncrypt should only inspect the low byte");
     }
 
     function test_trivialEncrypt_allTypes() public {
@@ -68,6 +80,9 @@ contract FHEVMExecutorSpecialTest is ExecutorDeployer {
         assertEq(uint8(result[30]), uint8(FheType.Uint8));
     }
 
+    /// @dev The real coprocessor supports cast-to-Bool (via inp.gt(0)), but the
+    ///      Solidity host contract intentionally blocks it (use fheNe instead).
+    ///      When using public `cast` this should revert.
     function test_cast_revert_toBool() public {
         bytes32 ct = _trivialEncrypt(42, FheType.Uint8);
         vm.expectRevert(FHEVMExecutor.UnsupportedType.selector);
@@ -129,6 +144,25 @@ contract FHEVMExecutorSpecialTest is ExecutorDeployer {
         bytes32 ifFalse = _trivialEncrypt(uint256(uint160(address(0xbeef))), FheType.Uint160);
         bytes32 result = executor.fheIfThenElse(control, ifTrue, ifFalse);
         assertEq(_readPlaintext(result), uint256(uint160(address(0xdead))));
+    }
+
+    function test_fheIfThenElse_noncanonical_bool_normalized_by_trivialEncrypt() public {
+        // tfhe-rs trivialEncrypt(Bool) uses `last_byte > 0`, so 2 maps to true.
+        bytes32 control = _trivialEncrypt(2, FheType.Bool);
+        bytes32 ifTrue = _trivialEncrypt(11, FheType.Uint8);
+        bytes32 ifFalse = _trivialEncrypt(22, FheType.Uint8);
+
+        bytes32 result = executor.fheIfThenElse(control, ifTrue, ifFalse);
+        assertEq(_readPlaintext(result), 11);
+    }
+
+    function test_fheIfThenElse_bool_high_byte_only_selects_false_branch() public {
+        bytes32 control = _trivialEncrypt(0x0100, FheType.Bool);
+        bytes32 ifTrue = _trivialEncrypt(11, FheType.Uint8);
+        bytes32 ifFalse = _trivialEncrypt(22, FheType.Uint8);
+
+        bytes32 result = executor.fheIfThenElse(control, ifTrue, ifFalse);
+        assertEq(_readPlaintext(result), 22);
     }
 
     // ──────────────────────────────────────────────

@@ -26,49 +26,49 @@ abstract contract PlaintextDBMixin is Test, FHEEvents {
         bytes32 selector = logEntry.topics[0];
 
         if (selector == FheAdd.selector) {
-            _handleBinaryOp(logEntry.data, CleartextArithmetic.add);
+            _handleBinaryOp(logEntry.data, CleartextArithmetic.fheAdd);
         } else if (selector == FheSub.selector) {
-            _handleBinaryOp(logEntry.data, CleartextArithmetic.sub);
+            _handleBinaryOp(logEntry.data, CleartextArithmetic.fheSub);
         } else if (selector == FheMul.selector) {
-            _handleBinaryOp(logEntry.data, CleartextArithmetic.mul);
+            _handleBinaryOp(logEntry.data, CleartextArithmetic.fheMul);
         } else if (selector == FheDiv.selector) {
-            _handleDiv(logEntry.data);
+            _handleBinaryOp(logEntry.data, CleartextArithmetic.fheDiv);
         } else if (selector == FheRem.selector) {
-            _handleRem(logEntry.data);
+            _handleBinaryOp(logEntry.data, CleartextArithmetic.fheRem);
         } else if (selector == FheBitAnd.selector) {
-            _handleBinaryOp(logEntry.data, CleartextArithmetic.bitAnd);
+            _handleBinaryOp(logEntry.data, CleartextArithmetic.fheBitAnd);
         } else if (selector == FheBitOr.selector) {
-            _handleBinaryOp(logEntry.data, CleartextArithmetic.bitOr);
+            _handleBinaryOp(logEntry.data, CleartextArithmetic.fheBitOr);
         } else if (selector == FheBitXor.selector) {
-            _handleBinaryOp(logEntry.data, CleartextArithmetic.bitXor);
+            _handleBinaryOp(logEntry.data, CleartextArithmetic.fheBitXor);
         } else if (selector == FheShl.selector) {
-            _handleBinaryOp(logEntry.data, CleartextArithmetic.shl);
+            _handleBinaryOp(logEntry.data, CleartextArithmetic.fheShl);
         } else if (selector == FheShr.selector) {
-            _handleBinaryOp(logEntry.data, CleartextArithmetic.shr);
+            _handleBinaryOp(logEntry.data, CleartextArithmetic.fheShr);
         } else if (selector == FheRotl.selector) {
-            _handleBinaryOp(logEntry.data, CleartextArithmetic.rotl);
+            _handleBinaryOp(logEntry.data, CleartextArithmetic.fheRotl);
         } else if (selector == FheRotr.selector) {
-            _handleBinaryOp(logEntry.data, CleartextArithmetic.rotr);
+            _handleBinaryOp(logEntry.data, CleartextArithmetic.fheRotr);
         } else if (selector == FheEq.selector) {
-            _handleCmp(logEntry.data, _eq);
+            _handleBinaryOp(logEntry.data, CleartextArithmetic.fheEq);
         } else if (selector == FheNe.selector) {
-            _handleCmp(logEntry.data, _ne);
+            _handleBinaryOp(logEntry.data, CleartextArithmetic.fheNe);
         } else if (selector == FheGe.selector) {
-            _handleCmp(logEntry.data, _ge);
+            _handleBinaryOp(logEntry.data, CleartextArithmetic.fheGe);
         } else if (selector == FheGt.selector) {
-            _handleCmp(logEntry.data, _gt);
+            _handleBinaryOp(logEntry.data, CleartextArithmetic.fheGt);
         } else if (selector == FheLe.selector) {
-            _handleCmp(logEntry.data, _le);
+            _handleBinaryOp(logEntry.data, CleartextArithmetic.fheLe);
         } else if (selector == FheLt.selector) {
-            _handleCmp(logEntry.data, _lt);
+            _handleBinaryOp(logEntry.data, CleartextArithmetic.fheLt);
         } else if (selector == FheMin.selector) {
-            _handleCmp(logEntry.data, _min);
+            _handleBinaryOp(logEntry.data, CleartextArithmetic.fheMin);
         } else if (selector == FheMax.selector) {
-            _handleCmp(logEntry.data, _max);
+            _handleBinaryOp(logEntry.data, CleartextArithmetic.fheMax);
         } else if (selector == FheNeg.selector) {
-            _handleUnaryOp(logEntry.data, CleartextArithmetic.neg);
+            _handleUnaryOp(logEntry.data, CleartextArithmetic.fheNeg);
         } else if (selector == FheNot.selector) {
-            _handleUnaryOp(logEntry.data, CleartextArithmetic.bitNot);
+            _handleUnaryOp(logEntry.data, CleartextArithmetic.fheNot);
         } else if (selector == TrivialEncrypt.selector) {
             _handleTrivialEncrypt(logEntry.data);
         } else if (selector == Cast.selector) {
@@ -84,99 +84,41 @@ abstract contract PlaintextDBMixin is Test, FHEEvents {
         }
     }
 
-    // --- Binary arithmetic (lhs, rhs, scalarByte, result) ---
+    // --- Binary ops (lhs, rhs, scalarByte, result) ---
 
-    function _loadBinaryOperands(bytes memory data)
+    function _handleBinaryOp(bytes memory data, function(uint256, uint256, uint8, bytes1) pure returns (uint256) op)
         private
-        view
-        returns (bytes32 result, uint256 bitWidth, uint256 a, uint256 b)
     {
-        (bytes32 lhs, bytes32 rhs, bytes1 scalarByte, bytes32 res) =
+        (bytes32 lhs, bytes32 rhs, bytes1 scalarByte, bytes32 result) =
             abi.decode(data, (bytes32, bytes32, bytes1, bytes32));
-        result = res;
-        bitWidth = FheTypeBitWidth.bitWidthForType(uint8(_typeOf(lhs)));
-        a = CleartextArithmetic.clamp(_plaintexts[lhs], bitWidth);
-        b = (scalarByte == 0x01) ? uint256(rhs) : CleartextArithmetic.clamp(_plaintexts[rhs], bitWidth);
+        uint256 rhsRaw = (scalarByte == 0x01) ? uint256(rhs) : _plaintexts[rhs];
+        _plaintexts[result] = op(_plaintexts[lhs], rhsRaw, uint8(_typeOf(lhs)), scalarByte);
     }
 
-    function _handleBinaryOp(bytes memory data, function(uint256, uint256, uint256) pure returns (uint256) op) private {
-        (bytes32 result, uint256 bw, uint256 a, uint256 b) = _loadBinaryOperands(data);
-        _plaintexts[result] = op(a, b, bw);
-    }
+    // --- Unary ops (ct, result) ---
 
-    function _handleDiv(bytes memory data) private {
-        (bytes32 result,, uint256 a, uint256 b) = _loadBinaryOperands(data);
-        _plaintexts[result] = a / b;
-    }
-
-    function _handleRem(bytes memory data) private {
-        (bytes32 result,, uint256 a, uint256 b) = _loadBinaryOperands(data);
-        _plaintexts[result] = a % b;
-    }
-
-    // --- Comparison / select (same decoding, no bitWidth needed) ---
-
-    function _handleCmp(bytes memory data, function(uint256, uint256) pure returns (uint256) op) private {
-        (bytes32 result,, uint256 a, uint256 b) = _loadBinaryOperands(data);
-        _plaintexts[result] = op(a, b);
-    }
-
-    function _eq(uint256 a, uint256 b) private pure returns (uint256) {
-        return (a == b) ? 1 : 0;
-    }
-
-    function _ne(uint256 a, uint256 b) private pure returns (uint256) {
-        return (a != b) ? 1 : 0;
-    }
-
-    function _ge(uint256 a, uint256 b) private pure returns (uint256) {
-        return (a >= b) ? 1 : 0;
-    }
-
-    function _gt(uint256 a, uint256 b) private pure returns (uint256) {
-        return (a > b) ? 1 : 0;
-    }
-
-    function _le(uint256 a, uint256 b) private pure returns (uint256) {
-        return (a <= b) ? 1 : 0;
-    }
-
-    function _lt(uint256 a, uint256 b) private pure returns (uint256) {
-        return (a < b) ? 1 : 0;
-    }
-
-    function _min(uint256 a, uint256 b) private pure returns (uint256) {
-        return (a < b) ? a : b;
-    }
-
-    function _max(uint256 a, uint256 b) private pure returns (uint256) {
-        return (a > b) ? a : b;
-    }
-
-    // --- Unary (ct, result) ---
-
-    function _handleUnaryOp(bytes memory data, function(uint256, uint256) pure returns (uint256) op) private {
+    function _handleUnaryOp(bytes memory data, function(uint256, uint8) pure returns (uint256) op) private {
         (bytes32 ct, bytes32 result) = abi.decode(data, (bytes32, bytes32));
-        uint256 bw = FheTypeBitWidth.bitWidthForType(uint8(_typeOf(ct)));
-        _plaintexts[result] = op(CleartextArithmetic.clamp(_plaintexts[ct], bw), bw);
+        _plaintexts[result] = op(_plaintexts[ct], uint8(_typeOf(ct)));
     }
 
-    // --- Misc ---
+    // --- Special ops ---
 
     function _handleTrivialEncrypt(bytes memory data) private {
-        (uint256 pt,, bytes32 result) = abi.decode(data, (uint256, uint8, bytes32));
-        _plaintexts[result] = pt;
+        (uint256 pt, uint8 toTypeRaw, bytes32 result) = abi.decode(data, (uint256, uint8, bytes32));
+        _plaintexts[result] = CleartextArithmetic.normalizePlaintextToType(pt, toTypeRaw);
     }
 
     function _handleCast(bytes memory data) private {
         (bytes32 ct, uint8 toTypeRaw, bytes32 result) = abi.decode(data, (bytes32, uint8, bytes32));
-        _plaintexts[result] = CleartextArithmetic.clamp(_plaintexts[ct], FheTypeBitWidth.bitWidthForType(toTypeRaw));
+        _plaintexts[result] = CleartextArithmetic.fheCast(_plaintexts[ct], toTypeRaw);
     }
 
     function _handleIfThenElse(bytes memory data) private {
         (bytes32 control, bytes32 ifTrue, bytes32 ifFalse, bytes32 result) =
             abi.decode(data, (bytes32, bytes32, bytes32, bytes32));
-        _plaintexts[result] = (_plaintexts[control] == 1) ? _plaintexts[ifTrue] : _plaintexts[ifFalse];
+        _plaintexts[result] =
+            CleartextArithmetic.fheIfThenElse(_plaintexts[control], _plaintexts[ifTrue], _plaintexts[ifFalse]);
     }
 
     function _handleRand(bytes memory data) private {

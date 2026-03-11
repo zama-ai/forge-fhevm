@@ -25,6 +25,7 @@ import {PlaintextDBMixin} from "./PlaintextDBMixin.sol";
 import {InputProofHelper} from "./InputProofHelper.sol";
 import {KMSDecryptionProofHelper} from "./KMSDecryptionProofHelper.sol";
 import {UserDecryptHelper} from "./UserDecryptHelper.sol";
+import {CleartextArithmetic} from "./cleartext/CleartextArithmetic.sol";
 
 import "encrypted-types/EncryptedTypes.sol";
 
@@ -550,7 +551,7 @@ abstract contract FhevmTest is PlaintextDBMixin {
         bytes memory ciphertext = abi.encodePacked(keccak256(abi.encodePacked(value, uint8(fheType), _encryptNonce)));
         handle = InputProofHelper.computeInputHandle(ciphertext, 0, fheType, aclAdd, uint64(block.chainid));
 
-        _plaintexts[handle] = value;
+        _plaintexts[handle] = CleartextArithmetic.normalizePlaintextToType(value, uint8(fheType));
 
         bytes32[] memory handles = new bytes32[](1);
         handles[0] = handle;

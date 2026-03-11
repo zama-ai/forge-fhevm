@@ -91,18 +91,17 @@ contract FHEVMExecutorIntegrationTest is ExecutorDeployer {
     }
 
     // ──────────────────────────────────────────────
-    //  Clamping at operation time (not at encrypt time)
+    //  Truncation at encrypt time (real coprocessor semantics)
     // ──────────────────────────────────────────────
 
-    function test_clamping_atOperationTime() public {
-        // trivialEncrypt stores raw value 300 for Uint8 (no clamping)
+    function test_truncation_atEncryptTime() public {
+        // Real coprocessor truncates at trivialEncrypt: 300 → 44 for euint8
         bytes32 lhs = executor.trivialEncrypt(300, FheType.Uint8);
-        assertEq(_readPlaintext(lhs), 300, "trivialEncrypt should not clamp");
+        assertEq(_readPlaintext(lhs), 44, "trivialEncrypt should truncate to type width");
 
-        // fheAdd should clamp inputs before computing: 300 clamped to 44, then 44+1=45
+        // fheAdd operates on already-in-range value: 44 + 1 = 45
         bytes32 result = executor.fheAdd(lhs, bytes32(uint256(1)), bytes1(0x01));
-        // 300 & 0xFF = 44, 44 + 1 = 45
-        assertEq(_readPlaintext(result), 45, "fheAdd should clamp inputs at operation time");
+        assertEq(_readPlaintext(result), 45, "fheAdd on truncated input");
     }
 
     // ──────────────────────────────────────────────

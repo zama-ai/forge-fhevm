@@ -7,6 +7,16 @@ import {FheType} from "@fhevm/host-contracts/contracts/shared/FheType.sol";
 import "encrypted-types/EncryptedTypes.sol";
 
 contract FhevmTestEncryptTest is FhevmTest {
+    function test_internalEncrypt_bool_nonzero_normalizesStoredPlaintext() public {
+        (bytes32 handle,) = _encrypt(2, FheType.Bool, address(this), address(this));
+        assertEq(_plaintexts[handle], 1);
+    }
+
+    function test_internalEncrypt_bool_high_byte_only_normalizesToFalse() public {
+        (bytes32 handle,) = _encrypt(0x0100, FheType.Bool, address(this), address(this));
+        assertEq(_plaintexts[handle], 0);
+    }
+
     function test_encryptUint64_returnsValidHandle() public {
         (externalEuint64 handle, bytes memory proof) = encryptUint64(42, address(this));
 

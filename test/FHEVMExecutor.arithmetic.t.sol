@@ -27,6 +27,19 @@ contract FHEVMExecutorArithmeticTest is ExecutorDeployer {
         assertEq(_readPlaintext(result), 44);
     }
 
+    function test_fheAdd_scalar_truncates_rhs() public {
+        // Scalar 261 truncates to 5 for euint8, so 5 + 5 = 10.
+        bytes32 lhs = _trivialEncrypt(5, FheType.Uint8);
+        bytes32 result = executor.fheAdd(lhs, bytes32(uint256(261)), bytes1(0x01));
+        assertEq(_readPlaintext(result), 10);
+    }
+
+    function test_fheAdd_scalar_truncates_rhs_uint16() public {
+        bytes32 lhs = _trivialEncrypt(10, FheType.Uint16);
+        bytes32 result = executor.fheAdd(lhs, bytes32(uint256(0x01_0005)), bytes1(0x01));
+        assertEq(_readPlaintext(result), 15);
+    }
+
     function test_fheAdd_encEnc_uint16() public {
         bytes32 lhs = _trivialEncrypt(30000, FheType.Uint16);
         bytes32 rhs = _trivialEncrypt(40000, FheType.Uint16);
@@ -145,6 +158,33 @@ contract FHEVMExecutorArithmeticTest is ExecutorDeployer {
         bytes32 lhs = _trivialEncrypt(10, FheType.Uint8);
         vm.expectRevert(FHEVMExecutor.DivisionByZero.selector);
         executor.fheRem(lhs, bytes32(uint256(0)), bytes1(0x01));
+    }
+
+    function test_fheDiv_scalar_truncated_input() public {
+        // trivialEncrypt(300, u8) truncates to 44, scalar 10 fits in u8
+        bytes32 lhs = _trivialEncrypt(300, FheType.Uint8);
+        bytes32 result = executor.fheDiv(lhs, bytes32(uint256(10)), bytes1(0x01));
+        assertEq(_readPlaintext(result), 4); // 44 / 10 = 4
+    }
+
+    function test_fheDiv_scalar_truncates_rhs() public {
+        // Scalar 266 truncates to 10 for euint8, so 44 / 10 = 4.
+        bytes32 lhs = _trivialEncrypt(44, FheType.Uint8);
+        bytes32 result = executor.fheDiv(lhs, bytes32(uint256(266)), bytes1(0x01));
+        assertEq(_readPlaintext(result), 4);
+    }
+
+    function test_fheRem_scalar_truncated_input() public {
+        bytes32 lhs = _trivialEncrypt(300, FheType.Uint8);
+        bytes32 result = executor.fheRem(lhs, bytes32(uint256(10)), bytes1(0x01));
+        assertEq(_readPlaintext(result), 4); // 44 % 10 = 4
+    }
+
+    function test_fheRem_scalar_truncates_rhs() public {
+        // Scalar 266 truncates to 10 for euint8, so 44 % 10 = 4.
+        bytes32 lhs = _trivialEncrypt(44, FheType.Uint8);
+        bytes32 result = executor.fheRem(lhs, bytes32(uint256(266)), bytes1(0x01));
+        assertEq(_readPlaintext(result), 4);
     }
 
     // ──────────────────────────────────────────────

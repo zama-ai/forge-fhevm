@@ -20,6 +20,13 @@ contract FHEVMExecutorBitwiseTest is ExecutorDeployer {
         assertEq(_readPlaintext(result), 0x00);
     }
 
+    function test_fheBitAnd_scalar_truncates_rhs() public {
+        // Scalar 0x1FF truncates to 0xFF for euint8, so 0xF0 & 0xFF = 0xF0.
+        bytes32 lhs = _trivialEncrypt(0xF0, FheType.Uint8);
+        bytes32 result = executor.fheBitAnd(lhs, bytes32(uint256(0x1FF)), bytes1(0x01));
+        assertEq(_readPlaintext(result), 0xF0);
+    }
+
     function test_fheBitAnd_encEnc_uint8() public {
         bytes32 lhs = _trivialEncrypt(0xFF, FheType.Uint8);
         bytes32 rhs = _trivialEncrypt(0x0F, FheType.Uint8);
@@ -32,6 +39,12 @@ contract FHEVMExecutorBitwiseTest is ExecutorDeployer {
         bytes32 rhs = _trivialEncrypt(0, FheType.Bool);
         bytes32 result = executor.fheBitAnd(lhs, rhs, bytes1(0x00));
         assertEq(_readPlaintext(result), 0);
+    }
+
+    function test_fheBitAnd_bool_scalar_high_byte_nonzero_is_true() public {
+        bytes32 lhs = _trivialEncrypt(1, FheType.Bool);
+        bytes32 result = executor.fheBitAnd(lhs, bytes32(uint256(0x0100)), bytes1(0x01));
+        assertEq(_readPlaintext(result), 1);
     }
 
     function test_fheBitAnd_uint256() public {
@@ -57,6 +70,12 @@ contract FHEVMExecutorBitwiseTest is ExecutorDeployer {
         assertEq(_readPlaintext(result), 1);
     }
 
+    function test_fheBitOr_bool_scalar_high_byte_nonzero_is_true() public {
+        bytes32 lhs = _trivialEncrypt(0, FheType.Bool);
+        bytes32 result = executor.fheBitOr(lhs, bytes32(uint256(0x0100)), bytes1(0x01));
+        assertEq(_readPlaintext(result), 1);
+    }
+
     // ──────────────────────────────────────────────
     //  fheBitXor
     // ──────────────────────────────────────────────
@@ -71,6 +90,12 @@ contract FHEVMExecutorBitwiseTest is ExecutorDeployer {
         bytes32 lhs = _trivialEncrypt(1, FheType.Bool);
         bytes32 rhs = _trivialEncrypt(1, FheType.Bool);
         bytes32 result = executor.fheBitXor(lhs, rhs, bytes1(0x00));
+        assertEq(_readPlaintext(result), 0);
+    }
+
+    function test_fheBitXor_bool_scalar_high_byte_nonzero_is_true() public {
+        bytes32 lhs = _trivialEncrypt(1, FheType.Bool);
+        bytes32 result = executor.fheBitXor(lhs, bytes32(uint256(0x0100)), bytes1(0x01));
         assertEq(_readPlaintext(result), 0);
     }
 
@@ -121,6 +146,13 @@ contract FHEVMExecutorBitwiseTest is ExecutorDeployer {
         assertEq(_readPlaintext(result), 127);
     }
 
+    function test_fheShr_truncated_input() public {
+        // trivialEncrypt(300, u8) truncates to 44. 44 >> 1 = 22
+        bytes32 lhs = _trivialEncrypt(300, FheType.Uint8);
+        bytes32 result = executor.fheShr(lhs, bytes32(uint256(1)), bytes1(0x01));
+        assertEq(_readPlaintext(result), 22);
+    }
+
     // ──────────────────────────────────────────────
     //  fheRotl
     // ──────────────────────────────────────────────
@@ -141,6 +173,14 @@ contract FHEVMExecutorBitwiseTest is ExecutorDeployer {
         assertEq(_readPlaintext(result), 42);
     }
 
+    function test_fheRotl_truncated_input() public {
+        // trivialEncrypt(300, u8) truncates to 44 = 0b00101100
+        // rotl(1) = 0b01011000 = 88
+        bytes32 lhs = _trivialEncrypt(300, FheType.Uint8);
+        bytes32 result = executor.fheRotl(lhs, bytes32(uint256(1)), bytes1(0x01));
+        assertEq(_readPlaintext(result), 88);
+    }
+
     // ──────────────────────────────────────────────
     //  fheRotr
     // ──────────────────────────────────────────────
@@ -157,6 +197,14 @@ contract FHEVMExecutorBitwiseTest is ExecutorDeployer {
         bytes32 lhs = _trivialEncrypt(42, FheType.Uint8);
         bytes32 result = executor.fheRotr(lhs, bytes32(uint256(8)), bytes1(0x01));
         assertEq(_readPlaintext(result), 42);
+    }
+
+    function test_fheRotr_truncated_input() public {
+        // trivialEncrypt(300, u8) truncates to 44 = 0b00101100
+        // rotr(1) = 0b00010110 = 22
+        bytes32 lhs = _trivialEncrypt(300, FheType.Uint8);
+        bytes32 result = executor.fheRotr(lhs, bytes32(uint256(1)), bytes1(0x01));
+        assertEq(_readPlaintext(result), 22);
     }
 
     // ──────────────────────────────────────────────
