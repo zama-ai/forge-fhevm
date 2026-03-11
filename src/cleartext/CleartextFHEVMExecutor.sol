@@ -159,7 +159,7 @@ contract CleartextFHEVMExecutor is FHEVMExecutor {
 
     function trivialEncrypt(uint256 pt, FheType toType) public override returns (bytes32 result) {
         result = super.trivialEncrypt(pt, toType);
-        plaintexts[result] = CleartextArithmetic.normalizeToType(pt, uint8(toType));
+        plaintexts[result] = CleartextArithmetic.normalizePlaintextToType(pt, uint8(toType));
     }
 
     /// @notice Verifies an input handle and mirrors its cleartext into `plaintexts`.
@@ -204,7 +204,7 @@ contract CleartextFHEVMExecutor is FHEVMExecutor {
                 assembly {
                     cleartext := mload(add(add(inputProof, 32), cleartextOffset))
                 }
-                plaintexts[result] = CleartextArithmetic.normalizeToType(cleartext, uint8(inputType));
+                plaintexts[result] = CleartextArithmetic.normalizePlaintextToType(cleartext, uint8(inputType));
                 break;
             }
         }

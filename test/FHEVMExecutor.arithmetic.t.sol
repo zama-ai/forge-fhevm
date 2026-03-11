@@ -34,6 +34,12 @@ contract FHEVMExecutorArithmeticTest is ExecutorDeployer {
         assertEq(_readPlaintext(result), 10);
     }
 
+    function test_fheAdd_scalar_truncates_rhs_uint16() public {
+        bytes32 lhs = _trivialEncrypt(10, FheType.Uint16);
+        bytes32 result = executor.fheAdd(lhs, bytes32(uint256(0x01_0005)), bytes1(0x01));
+        assertEq(_readPlaintext(result), 15);
+    }
+
     function test_fheAdd_encEnc_uint16() public {
         bytes32 lhs = _trivialEncrypt(30000, FheType.Uint16);
         bytes32 rhs = _trivialEncrypt(40000, FheType.Uint16);

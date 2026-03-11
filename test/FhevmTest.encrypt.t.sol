@@ -12,6 +12,11 @@ contract FhevmTestEncryptTest is FhevmTest {
         assertEq(_plaintexts[handle], 1);
     }
 
+    function test_internalEncrypt_bool_high_byte_only_normalizesToFalse() public {
+        (bytes32 handle,) = _encrypt(0x0100, FheType.Bool, address(this), address(this));
+        assertEq(_plaintexts[handle], 0);
+    }
+
     function test_encryptUint64_returnsValidHandle() public {
         (externalEuint64 handle, bytes memory proof) = encryptUint64(42, address(this));
 

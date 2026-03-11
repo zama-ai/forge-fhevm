@@ -41,9 +41,9 @@ contract FHEVMExecutorBitwiseTest is ExecutorDeployer {
         assertEq(_readPlaintext(result), 0);
     }
 
-    function test_fheBitAnd_bool_scalar_nonzero_is_true() public {
+    function test_fheBitAnd_bool_scalar_high_byte_nonzero_is_true() public {
         bytes32 lhs = _trivialEncrypt(1, FheType.Bool);
-        bytes32 result = executor.fheBitAnd(lhs, bytes32(uint256(2)), bytes1(0x01));
+        bytes32 result = executor.fheBitAnd(lhs, bytes32(uint256(0x0100)), bytes1(0x01));
         assertEq(_readPlaintext(result), 1);
     }
 
@@ -70,9 +70,9 @@ contract FHEVMExecutorBitwiseTest is ExecutorDeployer {
         assertEq(_readPlaintext(result), 1);
     }
 
-    function test_fheBitOr_bool_scalar_nonzero_is_true() public {
+    function test_fheBitOr_bool_scalar_high_byte_nonzero_is_true() public {
         bytes32 lhs = _trivialEncrypt(0, FheType.Bool);
-        bytes32 result = executor.fheBitOr(lhs, bytes32(uint256(2)), bytes1(0x01));
+        bytes32 result = executor.fheBitOr(lhs, bytes32(uint256(0x0100)), bytes1(0x01));
         assertEq(_readPlaintext(result), 1);
     }
 
@@ -93,9 +93,9 @@ contract FHEVMExecutorBitwiseTest is ExecutorDeployer {
         assertEq(_readPlaintext(result), 0);
     }
 
-    function test_fheBitXor_bool_scalar_nonzero_is_true() public {
+    function test_fheBitXor_bool_scalar_high_byte_nonzero_is_true() public {
         bytes32 lhs = _trivialEncrypt(1, FheType.Bool);
-        bytes32 result = executor.fheBitXor(lhs, bytes32(uint256(2)), bytes1(0x01));
+        bytes32 result = executor.fheBitXor(lhs, bytes32(uint256(0x0100)), bytes1(0x01));
         assertEq(_readPlaintext(result), 0);
     }
 

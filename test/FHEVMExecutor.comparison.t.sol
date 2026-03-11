@@ -49,9 +49,9 @@ contract FHEVMExecutorComparisonTest is ExecutorDeployer {
         assertEq(_readPlaintext(result), 1);
     }
 
-    function test_fheEq_bool_scalar_nonzero_is_true() public {
+    function test_fheEq_bool_scalar_high_byte_nonzero_is_true() public {
         bytes32 lhs = _trivialEncrypt(1, FheType.Bool);
-        bytes32 result = executor.fheEq(lhs, bytes32(uint256(2)), bytes1(0x01));
+        bytes32 result = executor.fheEq(lhs, bytes32(uint256(0x0100)), bytes1(0x01));
         assertEq(_readPlaintext(result), 1);
     }
 
@@ -77,9 +77,9 @@ contract FHEVMExecutorComparisonTest is ExecutorDeployer {
         assertEq(_readPlaintext(result), 1);
     }
 
-    function test_fheNe_bool_scalar_nonzero_is_true() public {
+    function test_fheNe_bool_scalar_high_byte_nonzero_is_true() public {
         bytes32 lhs = _trivialEncrypt(1, FheType.Bool);
-        bytes32 result = executor.fheNe(lhs, bytes32(uint256(2)), bytes1(0x01));
+        bytes32 result = executor.fheNe(lhs, bytes32(uint256(0x0100)), bytes1(0x01));
         assertEq(_readPlaintext(result), 0);
     }
 

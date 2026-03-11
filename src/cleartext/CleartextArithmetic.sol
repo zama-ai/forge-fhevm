@@ -23,9 +23,19 @@ library CleartextArithmetic {
         return value & ((uint256(1) << bitWidth) - 1);
     }
 
-    /// @notice Normalizes a plaintext to the target FHE type's representable domain.
-    /// @dev Bool follows tfhe-rs semantics: any non-zero low byte maps to `true`.
-    function normalizeToType(uint256 value, uint8 fheType) internal pure returns (uint256) {
+    /// @notice Normalizes plaintext that is being stored as a typed ciphertext value.
+    /// @dev Bool matches `trivial_encrypt_be_bytes`: only the least-significant byte matters.
+    function normalizePlaintextToType(uint256 value, uint8 fheType) internal pure returns (uint256) {
+        if (fheType == uint8(FheType.Bool)) {
+            return uint8(value) > 0 ? 1 : 0;
+        }
+
+        return clamp(value, FheTypeBitWidth.bitWidthForType(fheType));
+    }
+
+    /// @notice Normalizes a scalar RHS for mixed ciphertext-scalar operations.
+    /// @dev Bool matches `arr_non_zero`: any non-zero byte in the scalar makes it `true`.
+    function normalizeScalarToType(uint256 value, uint8 fheType) internal pure returns (uint256) {
         if (fheType == uint8(FheType.Bool)) {
             return value == 0 ? 0 : 1;
         }
@@ -145,7 +155,7 @@ library CleartextArithmetic {
     {
         bw = FheTypeBitWidth.bitWidthForType(fheType);
         a = lhsRaw;
-        b = (scalarByte == 0x01) ? normalizeToType(rhsRaw, fheType) : rhsRaw;
+        b = (scalarByte == 0x01) ? normalizeScalarToType(rhsRaw, fheType) : rhsRaw;
     }
 
     // --- Binary arithmetic ---

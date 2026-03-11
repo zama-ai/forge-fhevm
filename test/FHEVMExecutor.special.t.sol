@@ -47,6 +47,11 @@ contract FHEVMExecutorSpecialTest is ExecutorDeployer {
         assertEq(_readPlaintext(handle), 1, "Non-zero bool plaintext should normalize to true");
     }
 
+    function test_trivialEncrypt_bool_high_byte_only_is_false() public {
+        bytes32 handle = executor.trivialEncrypt(0x0100, FheType.Bool);
+        assertEq(_readPlaintext(handle), 0, "Bool trivialEncrypt should only inspect the low byte");
+    }
+
     function test_trivialEncrypt_allTypes() public {
         executor.trivialEncrypt(1, FheType.Bool);
         executor.trivialEncrypt(42, FheType.Uint8);
@@ -153,6 +158,15 @@ contract FHEVMExecutorSpecialTest is ExecutorDeployer {
 
         bytes32 result = executor.fheIfThenElse(control, ifTrue, ifFalse);
         assertEq(_readPlaintext(result), 11);
+    }
+
+    function test_fheIfThenElse_bool_high_byte_only_selects_false_branch() public {
+        bytes32 control = _trivialEncrypt(0x0100, FheType.Bool);
+        bytes32 ifTrue = _trivialEncrypt(11, FheType.Uint8);
+        bytes32 ifFalse = _trivialEncrypt(22, FheType.Uint8);
+
+        bytes32 result = executor.fheIfThenElse(control, ifTrue, ifFalse);
+        assertEq(_readPlaintext(result), 22);
     }
 
     // ──────────────────────────────────────────────
