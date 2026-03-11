@@ -6,151 +6,14 @@ import {FheType} from "../fhevm-host/contracts/shared/FheType.sol";
 import {CleartextArithmetic} from "./CleartextArithmetic.sol";
 import {FheTypeBitWidth} from "./FheTypeBitWidth.sol";
 
-/// @notice Cleartext executor variant for deployments backed by a cleartext service.
-/// @dev Extends the symbolic executor with a plaintext mirror for local/dev integrations.
-///      Unlike the base host contracts, `verifyInput` expects the `inputProof` extra-data section
-///      to append one 32-byte cleartext per handle, in the same order as the encoded handles:
-///      `numHandles || numSigners || handles || signatures || cleartexts`.
-///      This cleartext suffix is a deployment-specific convention consumed only by this contract.
+/// @notice FHEVMExecutor variant that mirrors every operation result into a `plaintexts` mapping.
+/// @dev Each override calls `super` (symbolic handle flow) then stores the cleartext.
 contract CleartextFHEVMExecutor is FHEVMExecutor {
+    error UnsupportedCleartextBinaryOp(Operators op);
+    error UnsupportedCleartextUnaryOp(Operators op);
+
     /// @dev Handle to cleartext value mapping for local testing.
     mapping(bytes32 => uint256) public plaintexts;
-
-    function fheAdd(bytes32 lhs, bytes32 rhs, bytes1 scalarByte) public override returns (bytes32 result) {
-        result = super.fheAdd(lhs, rhs, scalarByte);
-        plaintexts[result] =
-            CleartextArithmetic.fheAdd(plaintexts[lhs], _rhsValue(rhs, scalarByte), uint8(_typeOf(lhs)), scalarByte);
-    }
-
-    function fheSub(bytes32 lhs, bytes32 rhs, bytes1 scalarByte) public override returns (bytes32 result) {
-        result = super.fheSub(lhs, rhs, scalarByte);
-        plaintexts[result] =
-            CleartextArithmetic.fheSub(plaintexts[lhs], _rhsValue(rhs, scalarByte), uint8(_typeOf(lhs)), scalarByte);
-    }
-
-    function fheMul(bytes32 lhs, bytes32 rhs, bytes1 scalarByte) public override returns (bytes32 result) {
-        result = super.fheMul(lhs, rhs, scalarByte);
-        plaintexts[result] =
-            CleartextArithmetic.fheMul(plaintexts[lhs], _rhsValue(rhs, scalarByte), uint8(_typeOf(lhs)), scalarByte);
-    }
-
-    function fheDiv(bytes32 lhs, bytes32 rhs, bytes1 scalarByte) public override returns (bytes32 result) {
-        result = super.fheDiv(lhs, rhs, scalarByte);
-        plaintexts[result] =
-            CleartextArithmetic.fheDiv(plaintexts[lhs], _rhsValue(rhs, scalarByte), uint8(_typeOf(lhs)), scalarByte);
-    }
-
-    function fheRem(bytes32 lhs, bytes32 rhs, bytes1 scalarByte) public override returns (bytes32 result) {
-        result = super.fheRem(lhs, rhs, scalarByte);
-        plaintexts[result] =
-            CleartextArithmetic.fheRem(plaintexts[lhs], _rhsValue(rhs, scalarByte), uint8(_typeOf(lhs)), scalarByte);
-    }
-
-    function fheBitAnd(bytes32 lhs, bytes32 rhs, bytes1 scalarByte) public override returns (bytes32 result) {
-        result = super.fheBitAnd(lhs, rhs, scalarByte);
-        plaintexts[result] =
-            CleartextArithmetic.fheBitAnd(plaintexts[lhs], _rhsValue(rhs, scalarByte), uint8(_typeOf(lhs)), scalarByte);
-    }
-
-    function fheBitOr(bytes32 lhs, bytes32 rhs, bytes1 scalarByte) public override returns (bytes32 result) {
-        result = super.fheBitOr(lhs, rhs, scalarByte);
-        plaintexts[result] =
-            CleartextArithmetic.fheBitOr(plaintexts[lhs], _rhsValue(rhs, scalarByte), uint8(_typeOf(lhs)), scalarByte);
-    }
-
-    function fheBitXor(bytes32 lhs, bytes32 rhs, bytes1 scalarByte) public override returns (bytes32 result) {
-        result = super.fheBitXor(lhs, rhs, scalarByte);
-        plaintexts[result] =
-            CleartextArithmetic.fheBitXor(plaintexts[lhs], _rhsValue(rhs, scalarByte), uint8(_typeOf(lhs)), scalarByte);
-    }
-
-    function fheShl(bytes32 lhs, bytes32 rhs, bytes1 scalarByte) public override returns (bytes32 result) {
-        result = super.fheShl(lhs, rhs, scalarByte);
-        plaintexts[result] =
-            CleartextArithmetic.fheShl(plaintexts[lhs], _rhsValue(rhs, scalarByte), uint8(_typeOf(lhs)), scalarByte);
-    }
-
-    function fheShr(bytes32 lhs, bytes32 rhs, bytes1 scalarByte) public override returns (bytes32 result) {
-        result = super.fheShr(lhs, rhs, scalarByte);
-        plaintexts[result] =
-            CleartextArithmetic.fheShr(plaintexts[lhs], _rhsValue(rhs, scalarByte), uint8(_typeOf(lhs)), scalarByte);
-    }
-
-    function fheRotl(bytes32 lhs, bytes32 rhs, bytes1 scalarByte) public override returns (bytes32 result) {
-        result = super.fheRotl(lhs, rhs, scalarByte);
-        plaintexts[result] =
-            CleartextArithmetic.fheRotl(plaintexts[lhs], _rhsValue(rhs, scalarByte), uint8(_typeOf(lhs)), scalarByte);
-    }
-
-    function fheRotr(bytes32 lhs, bytes32 rhs, bytes1 scalarByte) public override returns (bytes32 result) {
-        result = super.fheRotr(lhs, rhs, scalarByte);
-        plaintexts[result] =
-            CleartextArithmetic.fheRotr(plaintexts[lhs], _rhsValue(rhs, scalarByte), uint8(_typeOf(lhs)), scalarByte);
-    }
-
-    function fheEq(bytes32 lhs, bytes32 rhs, bytes1 scalarByte) public override returns (bytes32 result) {
-        result = super.fheEq(lhs, rhs, scalarByte);
-        plaintexts[result] =
-            CleartextArithmetic.fheEq(plaintexts[lhs], _rhsValue(rhs, scalarByte), uint8(_typeOf(lhs)), scalarByte);
-    }
-
-    function fheNe(bytes32 lhs, bytes32 rhs, bytes1 scalarByte) public override returns (bytes32 result) {
-        result = super.fheNe(lhs, rhs, scalarByte);
-        plaintexts[result] =
-            CleartextArithmetic.fheNe(plaintexts[lhs], _rhsValue(rhs, scalarByte), uint8(_typeOf(lhs)), scalarByte);
-    }
-
-    function fheGe(bytes32 lhs, bytes32 rhs, bytes1 scalarByte) public override returns (bytes32 result) {
-        result = super.fheGe(lhs, rhs, scalarByte);
-        plaintexts[result] =
-            CleartextArithmetic.fheGe(plaintexts[lhs], _rhsValue(rhs, scalarByte), uint8(_typeOf(lhs)), scalarByte);
-    }
-
-    function fheGt(bytes32 lhs, bytes32 rhs, bytes1 scalarByte) public override returns (bytes32 result) {
-        result = super.fheGt(lhs, rhs, scalarByte);
-        plaintexts[result] =
-            CleartextArithmetic.fheGt(plaintexts[lhs], _rhsValue(rhs, scalarByte), uint8(_typeOf(lhs)), scalarByte);
-    }
-
-    function fheLe(bytes32 lhs, bytes32 rhs, bytes1 scalarByte) public override returns (bytes32 result) {
-        result = super.fheLe(lhs, rhs, scalarByte);
-        plaintexts[result] =
-            CleartextArithmetic.fheLe(plaintexts[lhs], _rhsValue(rhs, scalarByte), uint8(_typeOf(lhs)), scalarByte);
-    }
-
-    function fheLt(bytes32 lhs, bytes32 rhs, bytes1 scalarByte) public override returns (bytes32 result) {
-        result = super.fheLt(lhs, rhs, scalarByte);
-        plaintexts[result] =
-            CleartextArithmetic.fheLt(plaintexts[lhs], _rhsValue(rhs, scalarByte), uint8(_typeOf(lhs)), scalarByte);
-    }
-
-    function fheMin(bytes32 lhs, bytes32 rhs, bytes1 scalarByte) public override returns (bytes32 result) {
-        result = super.fheMin(lhs, rhs, scalarByte);
-        plaintexts[result] =
-            CleartextArithmetic.fheMin(plaintexts[lhs], _rhsValue(rhs, scalarByte), uint8(_typeOf(lhs)), scalarByte);
-    }
-
-    function fheMax(bytes32 lhs, bytes32 rhs, bytes1 scalarByte) public override returns (bytes32 result) {
-        result = super.fheMax(lhs, rhs, scalarByte);
-        plaintexts[result] =
-            CleartextArithmetic.fheMax(plaintexts[lhs], _rhsValue(rhs, scalarByte), uint8(_typeOf(lhs)), scalarByte);
-    }
-
-    function fheNeg(bytes32 ct) public override returns (bytes32 result) {
-        result = super.fheNeg(ct);
-        plaintexts[result] = CleartextArithmetic.fheNeg(plaintexts[ct], uint8(_typeOf(ct)));
-    }
-
-    function fheNot(bytes32 ct) public override returns (bytes32 result) {
-        result = super.fheNot(ct);
-        plaintexts[result] = CleartextArithmetic.fheNot(plaintexts[ct], uint8(_typeOf(ct)));
-    }
-
-    function fheIfThenElse(bytes32 control, bytes32 ifTrue, bytes32 ifFalse) public override returns (bytes32 result) {
-        result = super.fheIfThenElse(control, ifTrue, ifFalse);
-        plaintexts[result] =
-            CleartextArithmetic.fheIfThenElse(plaintexts[control], plaintexts[ifTrue], plaintexts[ifFalse]);
-    }
 
     function cast(bytes32 ct, FheType toType) public override returns (bytes32 result) {
         result = super.cast(ct, toType);
@@ -162,51 +25,16 @@ contract CleartextFHEVMExecutor is FHEVMExecutor {
         plaintexts[result] = CleartextArithmetic.normalizePlaintextToType(pt, uint8(toType));
     }
 
-    /// @notice Verifies an input handle and mirrors its cleartext into `plaintexts`.
-    /// @dev The underlying `InputVerifier` still authenticates the canonical prefix
-    ///      `numHandles || numSigners || handles || signatures || extraData`.
-    ///      In cleartext mode, this executor additionally interprets `extraData` as a packed
-    ///      sequence of 32-byte cleartexts, aligned with the `handles` array order.
-    ///      A companion cleartext service is expected to append those values when building proofs.
+    /// @notice Verifies input and extracts cleartext from the proof's extra-data suffix.
     function verifyInput(bytes32 inputHandle, address userAddress, bytes memory inputProof, FheType inputType)
         public
         override
         returns (bytes32 result)
     {
         result = super.verifyInput(inputHandle, userAddress, inputProof, inputType);
-
-        if (inputProof.length < 2) {
-            return result;
-        }
-
-        uint8 numHandles = uint8(inputProof[0]);
-        uint8 numSigners = uint8(inputProof[1]);
-        uint256 cleartextStart = 2 + uint256(numHandles) * 32 + uint256(numSigners) * 65;
-
-        if (inputProof.length < cleartextStart + 32) {
-            return result;
-        }
-
-        for (uint8 i = 0; i < numHandles; i++) {
-            uint256 handleOffset = 2 + uint256(i) * 32;
-            bytes32 handleInProof;
-            assembly {
-                handleInProof := mload(add(add(inputProof, 32), handleOffset))
-            }
-
-            if (handleInProof == inputHandle) {
-                uint256 cleartextOffset = cleartextStart + uint256(i) * 32;
-                if (inputProof.length < cleartextOffset + 32) {
-                    break;
-                }
-
-                uint256 cleartext;
-                assembly {
-                    cleartext := mload(add(add(inputProof, 32), cleartextOffset))
-                }
-                plaintexts[result] = CleartextArithmetic.normalizePlaintextToType(cleartext, uint8(inputType));
-                break;
-            }
+        (bool foundCleartext, uint256 cleartext) = _tryReadCleartextFromProof(inputHandle, inputProof);
+        if (foundCleartext) {
+            plaintexts[result] = CleartextArithmetic.normalizePlaintextToType(cleartext, uint8(inputType));
         }
     }
 
@@ -224,9 +52,118 @@ contract CleartextFHEVMExecutor is FHEVMExecutor {
         plaintexts[result] = CleartextArithmetic.randBounded(seed, upperBound);
     }
 
-    /// @dev Resolves the raw RHS value from storage or handle; scalar normalization
-    ///      is deferred to `_resolveBinaryOperands` in the pure arithmetic library.
+    function _binaryOp(Operators op, bytes32 lhs, bytes32 rhs, bytes1 scalarByte, FheType resultType)
+        internal
+        override
+        returns (bytes32 result)
+    {
+        result = super._binaryOp(op, lhs, rhs, scalarByte, resultType);
+        plaintexts[result] = _computeBinaryResult(op, lhs, rhs, scalarByte);
+    }
+
+    function _unaryOp(Operators op, bytes32 ct) internal override returns (bytes32 result) {
+        result = super._unaryOp(op, ct);
+        plaintexts[result] = _computeUnaryResult(op, ct);
+    }
+
+    function _ternaryOp(Operators op, bytes32 lhs, bytes32 middle, bytes32 rhs)
+        internal
+        override
+        returns (bytes32 result)
+    {
+        result = super._ternaryOp(op, lhs, middle, rhs);
+
+        if (op == Operators.fheIfThenElse) {
+            plaintexts[result] = CleartextArithmetic.fheIfThenElse(plaintexts[lhs], plaintexts[middle], plaintexts[rhs]);
+        }
+    }
+
     function _rhsValue(bytes32 rhs, bytes1 scalarByte) private view returns (uint256) {
         return (scalarByte == 0x01) ? uint256(rhs) : plaintexts[rhs];
+    }
+
+    function _computeBinaryResult(Operators op, bytes32 lhs, bytes32 rhs, bytes1 scalarByte)
+        private
+        view
+        returns (uint256)
+    {
+        uint256 lhsValue = plaintexts[lhs];
+        uint256 rhsValue = _rhsValue(rhs, scalarByte);
+        uint8 fheType = uint8(_typeOf(lhs));
+
+        if (op == Operators.fheAdd) return CleartextArithmetic.fheAdd(lhsValue, rhsValue, fheType, scalarByte);
+        if (op == Operators.fheSub) return CleartextArithmetic.fheSub(lhsValue, rhsValue, fheType, scalarByte);
+        if (op == Operators.fheMul) return CleartextArithmetic.fheMul(lhsValue, rhsValue, fheType, scalarByte);
+        if (op == Operators.fheDiv) return CleartextArithmetic.fheDiv(lhsValue, rhsValue, fheType, scalarByte);
+        if (op == Operators.fheRem) return CleartextArithmetic.fheRem(lhsValue, rhsValue, fheType, scalarByte);
+        if (op == Operators.fheBitAnd) return CleartextArithmetic.fheBitAnd(lhsValue, rhsValue, fheType, scalarByte);
+        if (op == Operators.fheBitOr) return CleartextArithmetic.fheBitOr(lhsValue, rhsValue, fheType, scalarByte);
+        if (op == Operators.fheBitXor) return CleartextArithmetic.fheBitXor(lhsValue, rhsValue, fheType, scalarByte);
+        if (op == Operators.fheShl) return CleartextArithmetic.fheShl(lhsValue, rhsValue, fheType, scalarByte);
+        if (op == Operators.fheShr) return CleartextArithmetic.fheShr(lhsValue, rhsValue, fheType, scalarByte);
+        if (op == Operators.fheRotl) return CleartextArithmetic.fheRotl(lhsValue, rhsValue, fheType, scalarByte);
+        if (op == Operators.fheRotr) return CleartextArithmetic.fheRotr(lhsValue, rhsValue, fheType, scalarByte);
+        if (op == Operators.fheEq) return CleartextArithmetic.fheEq(lhsValue, rhsValue, fheType, scalarByte);
+        if (op == Operators.fheNe) return CleartextArithmetic.fheNe(lhsValue, rhsValue, fheType, scalarByte);
+        if (op == Operators.fheGe) return CleartextArithmetic.fheGe(lhsValue, rhsValue, fheType, scalarByte);
+        if (op == Operators.fheGt) return CleartextArithmetic.fheGt(lhsValue, rhsValue, fheType, scalarByte);
+        if (op == Operators.fheLe) return CleartextArithmetic.fheLe(lhsValue, rhsValue, fheType, scalarByte);
+        if (op == Operators.fheLt) return CleartextArithmetic.fheLt(lhsValue, rhsValue, fheType, scalarByte);
+        if (op == Operators.fheMin) return CleartextArithmetic.fheMin(lhsValue, rhsValue, fheType, scalarByte);
+        if (op == Operators.fheMax) return CleartextArithmetic.fheMax(lhsValue, rhsValue, fheType, scalarByte);
+
+        revert UnsupportedCleartextBinaryOp(op);
+    }
+
+    function _computeUnaryResult(Operators op, bytes32 ct) private view returns (uint256) {
+        uint256 value = plaintexts[ct];
+        uint8 fheType = uint8(_typeOf(ct));
+
+        if (op == Operators.fheNeg) return CleartextArithmetic.fheNeg(value, fheType);
+        if (op == Operators.fheNot) return CleartextArithmetic.fheNot(value, fheType);
+
+        revert UnsupportedCleartextUnaryOp(op);
+    }
+
+    function _tryReadCleartextFromProof(bytes32 inputHandle, bytes memory inputProof)
+        private
+        pure
+        returns (bool foundCleartext, uint256 cleartext)
+    {
+        if (inputProof.length < 2) {
+            return (false, 0);
+        }
+
+        uint8 numHandles = uint8(inputProof[0]);
+        uint8 numSigners = uint8(inputProof[1]);
+        uint256 cleartextStart = 2 + uint256(numHandles) * 32 + uint256(numSigners) * 65;
+
+        if (inputProof.length < cleartextStart + 32) {
+            return (false, 0);
+        }
+
+        for (uint8 i = 0; i < numHandles; i++) {
+            uint256 handleOffset = 2 + uint256(i) * 32;
+            bytes32 handleInProof;
+            assembly {
+                handleInProof := mload(add(add(inputProof, 32), handleOffset))
+            }
+
+            if (handleInProof != inputHandle) {
+                continue;
+            }
+
+            uint256 cleartextOffset = cleartextStart + uint256(i) * 32;
+            if (inputProof.length < cleartextOffset + 32) {
+                return (false, 0);
+            }
+
+            assembly {
+                cleartext := mload(add(add(inputProof, 32), cleartextOffset))
+            }
+            return (true, cleartext);
+        }
+
+        return (false, 0);
     }
 }

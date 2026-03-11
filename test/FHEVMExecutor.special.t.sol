@@ -10,13 +10,6 @@ contract FHEVMExecutorSpecialTest is ExecutorDeployer {
         _deployExecutorStack();
     }
 
-    /// @dev `_readPlaintext` is internal, but the non-canonical control failure is
-    ///      triggered while processing executor logs inside that helper. Expose a
-    ///      public wrapper so Foundry can observe the revert through an external call.
-    function readPlaintest(bytes32 handle) public returns (uint256) {
-        return _readPlaintext(handle);
-    }
-
     // ──────────────────────────────────────────────
     //  trivialEncrypt
     // ──────────────────────────────────────────────
