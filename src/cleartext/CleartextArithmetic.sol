@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: BSD-3-Clause-Clear
 pragma solidity ^0.8.27;
 
+import {FheType} from "../fhevm-host/contracts/shared/FheType.sol";
 import {FheTypeBitWidth} from "./FheTypeBitWidth.sol";
 
 /**
@@ -20,6 +21,16 @@ library CleartextArithmetic {
         }
 
         return value & ((uint256(1) << bitWidth) - 1);
+    }
+
+    /// @notice Normalizes a plaintext to the target FHE type's representable domain.
+    /// @dev Bool follows tfhe-rs semantics: any non-zero low byte maps to `true`.
+    function normalizeToType(uint256 value, uint8 fheType) internal pure returns (uint256) {
+        if (fheType == uint8(FheType.Bool)) {
+            return value == 0 ? 0 : 1;
+        }
+
+        return clamp(value, FheTypeBitWidth.bitWidthForType(fheType));
     }
 
     function add(uint256 a, uint256 b, uint256 bitWidth) internal pure returns (uint256) {
@@ -134,7 +145,7 @@ library CleartextArithmetic {
     {
         bw = FheTypeBitWidth.bitWidthForType(fheType);
         a = lhsRaw;
-        b = (scalarByte == 0x01) ? clamp(rhsRaw, bw) : rhsRaw;
+        b = (scalarByte == 0x01) ? normalizeToType(rhsRaw, fheType) : rhsRaw;
     }
 
     // --- Binary arithmetic ---

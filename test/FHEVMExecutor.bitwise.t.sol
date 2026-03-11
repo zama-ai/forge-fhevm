@@ -20,6 +20,13 @@ contract FHEVMExecutorBitwiseTest is ExecutorDeployer {
         assertEq(_readPlaintext(result), 0x00);
     }
 
+    function test_fheBitAnd_scalar_truncates_rhs() public {
+        // Scalar 0x1FF truncates to 0xFF for euint8, so 0xF0 & 0xFF = 0xF0.
+        bytes32 lhs = _trivialEncrypt(0xF0, FheType.Uint8);
+        bytes32 result = executor.fheBitAnd(lhs, bytes32(uint256(0x1FF)), bytes1(0x01));
+        assertEq(_readPlaintext(result), 0xF0);
+    }
+
     function test_fheBitAnd_encEnc_uint8() public {
         bytes32 lhs = _trivialEncrypt(0xFF, FheType.Uint8);
         bytes32 rhs = _trivialEncrypt(0x0F, FheType.Uint8);
@@ -32,6 +39,12 @@ contract FHEVMExecutorBitwiseTest is ExecutorDeployer {
         bytes32 rhs = _trivialEncrypt(0, FheType.Bool);
         bytes32 result = executor.fheBitAnd(lhs, rhs, bytes1(0x00));
         assertEq(_readPlaintext(result), 0);
+    }
+
+    function test_fheBitAnd_bool_scalar_nonzero_is_true() public {
+        bytes32 lhs = _trivialEncrypt(1, FheType.Bool);
+        bytes32 result = executor.fheBitAnd(lhs, bytes32(uint256(2)), bytes1(0x01));
+        assertEq(_readPlaintext(result), 1);
     }
 
     function test_fheBitAnd_uint256() public {
@@ -57,6 +70,12 @@ contract FHEVMExecutorBitwiseTest is ExecutorDeployer {
         assertEq(_readPlaintext(result), 1);
     }
 
+    function test_fheBitOr_bool_scalar_nonzero_is_true() public {
+        bytes32 lhs = _trivialEncrypt(0, FheType.Bool);
+        bytes32 result = executor.fheBitOr(lhs, bytes32(uint256(2)), bytes1(0x01));
+        assertEq(_readPlaintext(result), 1);
+    }
+
     // ──────────────────────────────────────────────
     //  fheBitXor
     // ──────────────────────────────────────────────
@@ -71,6 +90,12 @@ contract FHEVMExecutorBitwiseTest is ExecutorDeployer {
         bytes32 lhs = _trivialEncrypt(1, FheType.Bool);
         bytes32 rhs = _trivialEncrypt(1, FheType.Bool);
         bytes32 result = executor.fheBitXor(lhs, rhs, bytes1(0x00));
+        assertEq(_readPlaintext(result), 0);
+    }
+
+    function test_fheBitXor_bool_scalar_nonzero_is_true() public {
+        bytes32 lhs = _trivialEncrypt(1, FheType.Bool);
+        bytes32 result = executor.fheBitXor(lhs, bytes32(uint256(2)), bytes1(0x01));
         assertEq(_readPlaintext(result), 0);
     }
 

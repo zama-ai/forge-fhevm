@@ -41,6 +41,12 @@ contract FHEVMExecutorSpecialTest is ExecutorDeployer {
         assertEq(_readPlaintext(handle), 44, "Should truncate 300 to 44 for euint8");
     }
 
+    function test_trivialEncrypt_bool_nonzero_is_true() public {
+        // tfhe-rs trivial bool encryption uses `last_byte > 0`, not `value & 1`.
+        bytes32 handle = executor.trivialEncrypt(2, FheType.Bool);
+        assertEq(_readPlaintext(handle), 1, "Non-zero bool plaintext should normalize to true");
+    }
+
     function test_trivialEncrypt_allTypes() public {
         executor.trivialEncrypt(1, FheType.Bool);
         executor.trivialEncrypt(42, FheType.Uint8);
@@ -139,10 +145,9 @@ contract FHEVMExecutorSpecialTest is ExecutorDeployer {
         assertEq(_readPlaintext(result), uint256(uint160(address(0xdead))));
     }
 
-    function test_fheIfThenElse_noncanonical_bool_truncated_by_trivialEncrypt() public {
-        // The real coprocessor truncates on trivialEncrypt, so 3 → clamp(3, 1) = 1 (true).
-        // Non-canonical bools cannot exist in practice.
-        bytes32 control = _trivialEncrypt(3, FheType.Bool);
+    function test_fheIfThenElse_noncanonical_bool_normalized_by_trivialEncrypt() public {
+        // Bool normalization follows tfhe-rs: any non-zero value maps to true.
+        bytes32 control = _trivialEncrypt(2, FheType.Bool);
         bytes32 ifTrue = _trivialEncrypt(11, FheType.Uint8);
         bytes32 ifFalse = _trivialEncrypt(22, FheType.Uint8);
 
