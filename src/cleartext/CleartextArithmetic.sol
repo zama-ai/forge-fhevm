@@ -301,7 +301,12 @@ library CleartextArithmetic {
         return (control == 1) ? ifTrue : ifFalse;
     }
 
+    // @dev: While the host contracts disable casting to Bool (prefer using FheNe instead), the
+    // internals should not be opinionated about it and mirror the coprocessor's behavior.
     function fheCast(uint256 valueRaw, uint8 toType) internal pure returns (uint256) {
+        if (toType == uint8(FheType.Bool)) {
+            return valueRaw > 0 ? 1 : 0;
+        }
         return clamp(valueRaw, FheTypeBitWidth.bitWidthForType(toType));
     }
 }

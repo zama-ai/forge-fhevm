@@ -80,6 +80,9 @@ contract FHEVMExecutorSpecialTest is ExecutorDeployer {
         assertEq(uint8(result[30]), uint8(FheType.Uint8));
     }
 
+    /// @dev The real coprocessor supports cast-to-Bool (via inp.gt(0)), but the
+    ///      Solidity host contract intentionally blocks it (use fheNe instead).
+    ///      When using public `cast` this should revert.
     function test_cast_revert_toBool() public {
         bytes32 ct = _trivialEncrypt(42, FheType.Uint8);
         vm.expectRevert(FHEVMExecutor.UnsupportedType.selector);

@@ -4,6 +4,7 @@ pragma solidity ^0.8.27;
 import {EmptyUUPSProxy} from "@fhevm/host-contracts/contracts/emptyProxy/EmptyUUPSProxy.sol";
 import {fhevmExecutorAdd} from "@fhevm/host-contracts/addresses/FHEVMHostAddresses.sol";
 import {FheType} from "@fhevm/host-contracts/contracts/shared/FheType.sol";
+import {CleartextArithmetic} from "../src/cleartext/CleartextArithmetic.sol";
 import {CleartextFHEVMExecutor} from "../src/cleartext/CleartextFHEVMExecutor.sol";
 import {InputProofTestHelper} from "./helpers/InputProofTestHelper.sol";
 
@@ -101,6 +102,12 @@ contract CleartextFHEVMExecutorTest is InputProofTestHelper {
 
         assertEq(clearExecutor.plaintexts(boolCt), 0);
         assertEq(clearExecutor.plaintexts(casted), 0);
+    }
+
+    function test_cleartextArithmetic_cast_to_bool_uses_gt_zero_semantics() public pure {
+        assertEq(CleartextArithmetic.fheCast(0, uint8(FheType.Bool)), 0);
+        assertEq(CleartextArithmetic.fheCast(2, uint8(FheType.Bool)), 1);
+        assertEq(CleartextArithmetic.fheCast(0x0100, uint8(FheType.Bool)), 1);
     }
 
     // ──────────────────────────────────────────────
