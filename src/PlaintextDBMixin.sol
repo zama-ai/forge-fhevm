@@ -105,8 +105,8 @@ abstract contract PlaintextDBMixin is Test, FHEEvents {
     // --- Special ops ---
 
     function _handleTrivialEncrypt(bytes memory data) private {
-        (uint256 pt,, bytes32 result) = abi.decode(data, (uint256, uint8, bytes32));
-        _plaintexts[result] = pt;
+        (uint256 pt, uint8 toTypeRaw, bytes32 result) = abi.decode(data, (uint256, uint8, bytes32));
+        _plaintexts[result] = CleartextArithmetic.clamp(pt, FheTypeBitWidth.bitWidthForType(toTypeRaw));
     }
 
     function _handleCast(bytes memory data) private {

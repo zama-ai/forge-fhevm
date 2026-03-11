@@ -108,10 +108,12 @@ contract FHEVMExecutorComparisonTest is ExecutorDeployer {
         assertEq(_readPlaintext(result), 0);
     }
 
-    function test_fheGt_uses_raw_dirty_lhs_like_mocks() public {
+    function test_fheGt_truncated_input() public {
+        // trivialEncrypt(300, u8) truncates to 44. scalar 100 truncates to 100.
+        // 44 > 100 → false
         bytes32 lhs = _trivialEncrypt(300, FheType.Uint8);
         bytes32 result = executor.fheGt(lhs, bytes32(uint256(100)), bytes1(0x01));
-        assertEq(_readPlaintext(result), 1);
+        assertEq(_readPlaintext(result), 0);
     }
 
     // ──────────────────────────────────────────────
@@ -172,10 +174,12 @@ contract FHEVMExecutorComparisonTest is ExecutorDeployer {
         assertEq(_readPlaintext(result), 100);
     }
 
-    function test_fheMin_uses_raw_dirty_values_like_mocks() public {
+    function test_fheMin_truncated_input() public {
+        // trivialEncrypt(300, u8) truncates to 44. scalar 100 truncates to 100.
+        // min(44, 100) = 44
         bytes32 lhs = _trivialEncrypt(300, FheType.Uint8);
         bytes32 result = executor.fheMin(lhs, bytes32(uint256(100)), bytes1(0x01));
-        assertEq(_readPlaintext(result), 100);
+        assertEq(_readPlaintext(result), 44);
     }
 
     function test_fheMax_encEnc() public {
@@ -185,10 +189,12 @@ contract FHEVMExecutorComparisonTest is ExecutorDeployer {
         assertEq(_readPlaintext(result), 200);
     }
 
-    function test_fheMax_uses_raw_dirty_values_like_mocks() public {
+    function test_fheMax_truncated_input() public {
+        // trivialEncrypt(300, u8) truncates to 44. scalar 100 truncates to 100.
+        // max(44, 100) = 100
         bytes32 lhs = _trivialEncrypt(300, FheType.Uint8);
         bytes32 result = executor.fheMax(lhs, bytes32(uint256(100)), bytes1(0x01));
-        assertEq(_readPlaintext(result), 300);
+        assertEq(_readPlaintext(result), 100);
     }
 
     // ──────────────────────────────────────────────

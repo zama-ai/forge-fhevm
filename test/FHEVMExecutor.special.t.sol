@@ -34,10 +34,11 @@ contract FHEVMExecutorSpecialTest is ExecutorDeployer {
         assertEq(handle1, handle2);
     }
 
-    function test_trivialEncrypt_noClamping() public {
-        // trivialEncrypt stores raw value without clamping
+    function test_trivialEncrypt_truncates() public {
+        // Real coprocessor truncates plaintext to target type's bit-width.
+        // 300 = 0x012C → last byte = 0x2C = 44
         bytes32 handle = executor.trivialEncrypt(300, FheType.Uint8);
-        assertEq(_readPlaintext(handle), 300, "Should store 300, not 44 (clamped)");
+        assertEq(_readPlaintext(handle), 44, "Should truncate 300 to 44 for euint8");
     }
 
     function test_trivialEncrypt_allTypes() public {
@@ -138,15 +139,15 @@ contract FHEVMExecutorSpecialTest is ExecutorDeployer {
         assertEq(_readPlaintext(result), uint256(uint160(address(0xdead))));
     }
 
-    function test_fheIfThenElse_reverts_on_noncanonical_bool_control_like_mocks() public {
+    function test_fheIfThenElse_noncanonical_bool_truncated_by_trivialEncrypt() public {
+        // The real coprocessor truncates on trivialEncrypt, so 3 → clamp(3, 1) = 1 (true).
+        // Non-canonical bools cannot exist in practice.
         bytes32 control = _trivialEncrypt(3, FheType.Bool);
         bytes32 ifTrue = _trivialEncrypt(11, FheType.Uint8);
         bytes32 ifFalse = _trivialEncrypt(22, FheType.Uint8);
 
         bytes32 result = executor.fheIfThenElse(control, ifTrue, ifFalse);
-
-        vm.expectRevert(bytes("Unexpected FheIfThenElse control value"));
-        _readPlaintext(result);
+        assertEq(_readPlaintext(result), 11);
     }
 
     // ──────────────────────────────────────────────

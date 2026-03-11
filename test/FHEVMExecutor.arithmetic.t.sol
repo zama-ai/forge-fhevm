@@ -147,18 +147,17 @@ contract FHEVMExecutorArithmeticTest is ExecutorDeployer {
         executor.fheRem(lhs, bytes32(uint256(0)), bytes1(0x01));
     }
 
-    function test_fheDiv_scalar_uses_raw_dirty_lhs_like_mocks() public {
+    function test_fheDiv_scalar_truncated_input() public {
+        // trivialEncrypt(300, u8) truncates to 44, scalar 10 fits in u8
         bytes32 lhs = _trivialEncrypt(300, FheType.Uint8);
         bytes32 result = executor.fheDiv(lhs, bytes32(uint256(10)), bytes1(0x01));
-
-        assertEq(_readPlaintext(result), 30);
+        assertEq(_readPlaintext(result), 4); // 44 / 10 = 4
     }
 
-    function test_fheRem_scalar_uses_raw_dirty_lhs_like_mocks() public {
+    function test_fheRem_scalar_truncated_input() public {
         bytes32 lhs = _trivialEncrypt(300, FheType.Uint8);
         bytes32 result = executor.fheRem(lhs, bytes32(uint256(10)), bytes1(0x01));
-
-        assertEq(_readPlaintext(result), 0);
+        assertEq(_readPlaintext(result), 4); // 44 % 10 = 4
     }
 
     // ──────────────────────────────────────────────
