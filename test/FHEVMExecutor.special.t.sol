@@ -151,7 +151,7 @@ contract FHEVMExecutorSpecialTest is ExecutorDeployer {
     }
 
     function test_fheIfThenElse_noncanonical_bool_normalized_by_trivialEncrypt() public {
-        // Bool normalization follows tfhe-rs: any non-zero value maps to true.
+        // tfhe-rs trivialEncrypt(Bool) uses `last_byte > 0`, so 2 maps to true.
         bytes32 control = _trivialEncrypt(2, FheType.Bool);
         bytes32 ifTrue = _trivialEncrypt(11, FheType.Uint8);
         bytes32 ifFalse = _trivialEncrypt(22, FheType.Uint8);
