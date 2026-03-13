@@ -11,7 +11,7 @@ address constant aclAdd = address(0x50157CFfD6bBFA2DECe204a89ec419c23ef5755D);
 
 address constant fhevmExecutorAdd = address(0xe3a9105a3a932253A70F126eb1E3b589C643dD24);
 
-address constant kmsVerifierAdd = address(0xbE0E383937d564D7FF0BC3b46c51f0bF8d5C311A);
+address constant kmsVerifierAdd = address(0x901F8942346f7AB3a01F6D7613119Bca447Bb030);
 
 address constant inputVerifierAdd = address(0x36772142b74871f255CbD7A3e89B401d3e45825f);
 
