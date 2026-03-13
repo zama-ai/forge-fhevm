@@ -4,7 +4,7 @@ pragma solidity ^0.8.27;
 import {FHE} from "@fhevm/solidity/lib/FHE.sol";
 import {ZamaEthereumConfig} from "@fhevm/solidity/config/ZamaConfig.sol";
 
-import "encrypted-types/EncryptedTypes.sol";
+import {euint64, externalEuint64} from "encrypted-types/EncryptedTypes.sol";
 
 contract SampleEncryptedToken is ZamaEthereumConfig {
     mapping(address => euint64) private _balances;

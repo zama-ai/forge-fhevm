@@ -21,6 +21,7 @@ line_length = 120
 
 [lint]
 ignore = ["src/fhevm-host/**/*.sol"]
+exclude_lints = ["asm-keccak256", "mixed-case-function"]
 
 [dependencies]
 "@openzeppelin-contracts" = "5.1.0"

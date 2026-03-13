@@ -4,7 +4,16 @@ pragma solidity ^0.8.27;
 import {FhevmTest} from "../src/FhevmTest.sol";
 import {FheType} from "@fhevm/host-contracts/contracts/shared/FheType.sol";
 
-import "encrypted-types/EncryptedTypes.sol";
+import {
+    externalEbool,
+    externalEuint8,
+    externalEuint16,
+    externalEuint32,
+    externalEuint64,
+    externalEuint128,
+    externalEuint256,
+    externalEaddress
+} from "encrypted-types/EncryptedTypes.sol";
 
 contract FhevmTestEncryptTest is FhevmTest {
     function test_internalEncrypt_bool_nonzero_normalizesStoredPlaintext() public {

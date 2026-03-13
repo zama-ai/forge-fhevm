@@ -4,7 +4,24 @@ pragma solidity ^0.8.27;
 import {FhevmTest} from "../src/FhevmTest.sol";
 import {FheType} from "@fhevm/host-contracts/contracts/shared/FheType.sol";
 
-import "encrypted-types/EncryptedTypes.sol";
+import {
+    ebool,
+    euint8,
+    euint16,
+    euint32,
+    euint64,
+    euint128,
+    euint256,
+    eaddress,
+    externalEbool,
+    externalEuint8,
+    externalEuint16,
+    externalEuint32,
+    externalEuint64,
+    externalEuint128,
+    externalEuint256,
+    externalEaddress
+} from "encrypted-types/EncryptedTypes.sol";
 
 contract FhevmTestDecryptTest is FhevmTest {
     // ── Typed decrypt overloads ──────────────────────────────────────────

@@ -6,7 +6,7 @@ import {ZamaEthereumConfig} from "@fhevm/solidity/config/ZamaConfig.sol";
 import {FhevmTest} from "../src/FhevmTest.sol";
 import {FheType} from "@fhevm/host-contracts/contracts/shared/FheType.sol";
 
-import "encrypted-types/EncryptedTypes.sol";
+import {externalEuint16, externalEuint64, externalEuint256} from "encrypted-types/EncryptedTypes.sol";
 
 contract FhevmPublicDecryptVerifier is ZamaEthereumConfig {
     function verify(bytes32[] memory handles, bytes memory abiEncodedCleartexts, bytes memory decryptionProof)

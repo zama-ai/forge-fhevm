@@ -8,7 +8,6 @@ import {KMSVerifier} from "@fhevm/host-contracts/contracts/KMSVerifier.sol";
 import {PauserSet} from "@fhevm/host-contracts/contracts/immutable/PauserSet.sol";
 import {EmptyUUPSProxy} from "@fhevm/host-contracts/contracts/emptyProxy/EmptyUUPSProxy.sol";
 import {EmptyUUPSProxyACL} from "@fhevm/host-contracts/contracts/emptyProxyACL/EmptyUUPSProxyACL.sol";
-import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 import {IERC7984ERC20Wrapper} from "@openzeppelin/confidential-contracts/interfaces/IERC7984ERC20Wrapper.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {
@@ -27,7 +26,24 @@ import {KMSDecryptionProofHelper} from "./KMSDecryptionProofHelper.sol";
 import {UserDecryptHelper} from "./UserDecryptHelper.sol";
 import {CleartextArithmetic} from "./cleartext/CleartextArithmetic.sol";
 
-import "encrypted-types/EncryptedTypes.sol";
+import {
+    ebool,
+    euint8,
+    euint16,
+    euint32,
+    euint64,
+    euint128,
+    euint256,
+    eaddress,
+    externalEbool,
+    externalEuint8,
+    externalEuint16,
+    externalEuint32,
+    externalEuint64,
+    externalEuint128,
+    externalEuint256,
+    externalEaddress
+} from "encrypted-types/EncryptedTypes.sol";
 
 abstract contract FhevmTest is PlaintextDBMixin {
     error HandleNotAllowedForPublicDecryption(bytes32 handle);
@@ -48,15 +64,15 @@ abstract contract FhevmTest is PlaintextDBMixin {
     InputVerifier internal _inputVerifier;
     KMSVerifier internal _kmsVerifier;
 
-    address internal MOCK_INPUT_SIGNER;
-    address internal MOCK_KMS_SIGNER;
+    address internal mockInputSigner;
+    address internal mockKmsSigner;
 
     uint256 private _encryptNonce;
 
     function setUp() public virtual {
         vm.chainId(31337);
-        MOCK_INPUT_SIGNER = vm.addr(MOCK_INPUT_SIGNER_PK);
-        MOCK_KMS_SIGNER = vm.addr(MOCK_KMS_SIGNER_PK);
+        mockInputSigner = vm.addr(MOCK_INPUT_SIGNER_PK);
+        mockKmsSigner = vm.addr(MOCK_KMS_SIGNER_PK);
         _deployAllContracts();
 
         vm.recordLogs();
@@ -507,7 +523,7 @@ abstract contract FhevmTest is PlaintextDBMixin {
 
         address inputVerifierImpl = address(new InputVerifier());
         address[] memory signers = new address[](1);
-        signers[0] = MOCK_INPUT_SIGNER;
+        signers[0] = mockInputSigner;
 
         vm.prank(PROXY_OWNER);
         EmptyUUPSProxy(inputVerifierAdd)
@@ -530,7 +546,7 @@ abstract contract FhevmTest is PlaintextDBMixin {
 
         address kmsVerifierImpl = address(new KMSVerifier());
         address[] memory signers = new address[](1);
-        signers[0] = MOCK_KMS_SIGNER;
+        signers[0] = mockKmsSigner;
 
         vm.prank(PROXY_OWNER);
         EmptyUUPSProxy(kmsVerifierAdd)

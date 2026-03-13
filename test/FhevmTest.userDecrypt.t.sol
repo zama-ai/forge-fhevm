@@ -6,7 +6,16 @@ import {UserDecryptHelper} from "../src/UserDecryptHelper.sol";
 import {FheType} from "@fhevm/host-contracts/contracts/shared/FheType.sol";
 import {kmsVerifierAdd} from "@fhevm/host-contracts/addresses/FHEVMHostAddresses.sol";
 
-import "encrypted-types/EncryptedTypes.sol";
+import {
+    externalEbool,
+    externalEuint8,
+    externalEuint16,
+    externalEuint32,
+    externalEuint64,
+    externalEuint128,
+    externalEuint256,
+    externalEaddress
+} from "encrypted-types/EncryptedTypes.sol";
 
 contract FhevmTestUserDecryptTest is FhevmTest {
     uint256 internal constant USER_PK = 0xA11CE;
