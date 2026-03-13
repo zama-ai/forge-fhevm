@@ -13,7 +13,7 @@ address constant fhevmExecutorAdd = address(0xe3a9105a3a932253A70F126eb1E3b589C6
 
 address constant kmsVerifierAdd = address(0x901F8942346f7AB3a01F6D7613119Bca447Bb030);
 
-address constant inputVerifierAdd = address(0x4c5859f0F772848b2D91F1D83E2Fe57935348029);
+address constant inputVerifierAdd = address(0x36772142b74871f255CbD7A3e89B401d3e45825f);
 
 address constant hcuLimitAdd = address(0x5f3f1dBD7B74C6B46e8c44f98792A1dAf8d69154);
 
