@@ -107,15 +107,15 @@ jobs:
           done
 
       - name: Deploy local fixed-address stack
-        run: |
-          cp .env.example .env
-          ./deploy-local.sh
+        run: ./deploy-local.sh
 
       - name: Validate local fixed-address stack
-        run: ./script/validate-deployment.sh
+        run: RPC_URL=http://localhost:8545 ./script/validate-deployment.sh
 
       - name: Deploy computed-address stack
-        run: BROADCAST=--broadcast ./deploy.sh
+        run: |
+          cp .env.example .env
+          BROADCAST=--broadcast ./deploy.sh
 
       - name: Validate computed-address stack
         run: ./script/validate-deployment.sh

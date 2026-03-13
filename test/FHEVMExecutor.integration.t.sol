@@ -4,7 +4,6 @@ pragma solidity ^0.8.27;
 import {ExecutorDeployer} from "./helpers/ExecutorDeployer.sol";
 import {FheType} from "@fhevm/host-contracts/contracts/shared/FheType.sol";
 import {FHEVMExecutor} from "@fhevm/host-contracts/contracts/FHEVMExecutor.sol";
-import {ACL} from "@fhevm/host-contracts/contracts/ACL.sol";
 import {aclAdd, fhevmExecutorAdd} from "@fhevm/host-contracts/addresses/FHEVMHostAddresses.sol";
 
 contract FHEVMExecutorIntegrationTest is ExecutorDeployer {

@@ -38,10 +38,10 @@ abstract contract ExecutorDeployer is PlaintextDBMixin {
         vm.etch(pauserSetAdd, address(new PauserSet()).code);
         vm.label(pauserSetAdd, "PauserSet");
 
-        address emptyProxyACLImpl = address(new EmptyUUPSProxyACL());
+        address emptyProxyAclImpl = address(new EmptyUUPSProxyACL());
         deployCodeTo(
             "test/helpers/ExecutorDeployer.sol:DeployableERC1967Proxy",
-            abi.encode(emptyProxyACLImpl, abi.encodeCall(EmptyUUPSProxyACL.initialize, (OWNER))),
+            abi.encode(emptyProxyAclImpl, abi.encodeCall(EmptyUUPSProxyACL.initialize, (OWNER))),
             aclAdd
         );
         vm.label(aclAdd, "ACL Proxy");

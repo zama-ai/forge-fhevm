@@ -3,9 +3,7 @@ pragma solidity ^0.8.27;
 
 import {FhevmTest} from "../src/FhevmTest.sol";
 import {SampleEncryptedToken} from "./helpers/SampleEncryptedToken.sol";
-import {FheType} from "@fhevm/host-contracts/contracts/shared/FheType.sol";
-
-import "encrypted-types/EncryptedTypes.sol";
+import {externalEuint64, euint64} from "encrypted-types/EncryptedTypes.sol";
 
 contract FhevmTestIntegrationTest is FhevmTest {
     uint256 internal constant USER_PK = 0xA11CE;
@@ -50,26 +48,26 @@ contract FhevmTestIntegrationTest is FhevmTest {
         (externalEuint64 left, bytes memory leftProof) = encryptUint64(a, address(token));
         (externalEuint64 right, bytes memory rightProof) = encryptUint64(b, address(token));
 
-        euint64 sumAB = token.addEncrypted(left, leftProof, right, rightProof);
-        euint64 sumBA = token.addEncrypted(right, rightProof, left, leftProof);
+        euint64 sumAb = token.addEncrypted(left, leftProof, right, rightProof);
+        euint64 sumBa = token.addEncrypted(right, rightProof, left, leftProof);
 
-        bytes32[] memory handlesAB = new bytes32[](1);
-        handlesAB[0] = euint64.unwrap(sumAB);
-        _acl.allowForDecryption(handlesAB);
+        bytes32[] memory handlesAb = new bytes32[](1);
+        handlesAb[0] = euint64.unwrap(sumAb);
+        _acl.allowForDecryption(handlesAb);
 
-        bytes32[] memory handlesBA = new bytes32[](1);
-        handlesBA[0] = euint64.unwrap(sumBA);
-        _acl.allowForDecryption(handlesBA);
+        bytes32[] memory handlesBa = new bytes32[](1);
+        handlesBa[0] = euint64.unwrap(sumBa);
+        _acl.allowForDecryption(handlesBa);
 
-        (uint256[] memory clearAB,) = publicDecrypt(handlesAB);
-        (uint256[] memory clearBA,) = publicDecrypt(handlesBA);
+        (uint256[] memory clearAb,) = publicDecrypt(handlesAb);
+        (uint256[] memory clearBa,) = publicDecrypt(handlesBa);
 
         uint64 expected;
         unchecked {
             expected = a + b;
         }
-        assertEq(clearAB[0], clearBA[0]);
-        assertEq(clearAB[0], expected);
+        assertEq(clearAb[0], clearBa[0]);
+        assertEq(clearAb[0], expected);
     }
 
     function test_integration_contractUnderTestInheritsZamaConfig() public {

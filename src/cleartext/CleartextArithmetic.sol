@@ -27,6 +27,7 @@ library CleartextArithmetic {
     /// @dev Bool matches `trivial_encrypt_be_bytes`: only the least-significant byte matters.
     function normalizePlaintextToType(uint256 value, uint8 fheType) internal pure returns (uint256) {
         if (fheType == uint8(FheType.Bool)) {
+            // forge-lint: disable-next-line(unsafe-typecast)
             return uint8(value) > 0 ? 1 : 0;
         }
 

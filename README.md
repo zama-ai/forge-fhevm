@@ -88,11 +88,32 @@ The fhEVM host contracts are vendored in `src/fhevm-host/` because the upstream 
 
 ## Deploying a cleartext FHEVM stack
 
-Two deployment paths exist depending on the target network. Both deploy a cleartext FHEVM where encrypted values are stored as plaintexts on-chain (nothing is actually encrypted). Copy `.env.example` to `.env` and fill in the required values first.
+Two deployment paths exist depending on the target network. Both deploy a cleartext FHEVM where encrypted values are stored as plaintexts on-chain (nothing is actually encrypted).
 
-**Remote chains (testnets, private chains)** — `BROADCAST=--broadcast ./deploy.sh`. Contracts are deployed at deterministic addresses based on the deployer's nonce, and `FHEVMHostAddresses.sol` is updated accordingly.
+**Remote chains (testnets, private chains)** — Copy `.env.example` to `.env`, fill in the values, then run `BROADCAST=--broadcast ./deploy.sh`. Contracts are deployed at deterministic addresses based on the deployer's nonce, and `FHEVMHostAddresses.sol` is updated accordingly.
 
-**Local dev nodes (Anvil/Hardhat, chain ID 31337)** — `./deploy-local.sh`. Reads the committed addresses from `FHEVMHostAddresses.sol` and materializes the contracts directly at those fixed addresses via `setCode`/`setStorageAt` RPC calls. Use this when you need contracts at the canonical Zama local addresses so `ZamaConfig._getLocalConfig()` works out of the box.
+**Local dev nodes (Anvil/Hardhat, chain ID 31337)** — `./deploy-local.sh`. This path is local-first and zero-config: it uses the committed addresses from `FHEVMHostAddresses.sol`, fixed mock gateway/signer defaults, and materializes the contracts directly at those addresses via `setCode`/`setStorageAt`. If you only need the standard local setup that `ZamaConfig._getLocalConfig()` expects, no `.env` file is required.
+
+Examples:
+
+```bash
+# Deploy to the default local node at http://127.0.0.1:8545
+./deploy-local.sh
+
+# Deploy to a specific Anvil port
+./deploy-local.sh --anvil-port 8546
+
+# Deploy to two local nodes concurrently with one build
+./deploy-local.sh --anvil-port 8545 --anvil-port 8546
+
+# Reuse already-built artifacts
+./deploy-local.sh --skip-build --anvil-port 8545 --anvil-port 8546
+
+# Show progress logs
+./deploy-local.sh -v --anvil-port 8545
+```
+
+`deploy-local.sh` treats local deploy as `build once, materialize many`. It never rewrites `FHEVMHostAddresses.sol` and never runs `forge clean`, because the committed addresses are already the canonical local ones. A normal `forge build` prepares artifacts when needed, then the script deploys to every requested node in parallel.
 
 ## License
 

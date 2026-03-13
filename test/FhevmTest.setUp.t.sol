@@ -12,7 +12,7 @@ import {
 import {FhevmTest} from "../src/FhevmTest.sol";
 import {FheType} from "@fhevm/host-contracts/contracts/shared/FheType.sol";
 
-import "encrypted-types/EncryptedTypes.sol";
+import {externalEuint64, euint64} from "encrypted-types/EncryptedTypes.sol";
 
 contract FhevmSetUpRoutingHarness is ZamaEthereumConfig {
     function addFromExternal(externalEuint64 lhs, bytes calldata lhsProof, externalEuint64 rhs, bytes calldata rhsProof)
@@ -50,12 +50,12 @@ contract FhevmTestSetUpTest is FhevmTest {
     }
 
     function test_setUp_kmsVerifierHasMockSigner() public view {
-        assertTrue(_kmsVerifier.isSigner(MOCK_KMS_SIGNER));
+        assertTrue(_kmsVerifier.isSigner(mockKmsSigner));
         assertEq(_kmsVerifier.getThreshold(), 1);
     }
 
     function test_setUp_inputVerifierHasMockSigner() public view {
-        assertTrue(_inputVerifier.isSigner(MOCK_INPUT_SIGNER));
+        assertTrue(_inputVerifier.isSigner(mockInputSigner));
         assertEq(_inputVerifier.getThreshold(), 1);
     }
 

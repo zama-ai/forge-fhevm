@@ -90,6 +90,7 @@ contract ComputeAddresses is Script {
             ");\n"
         );
 
+        // forge-lint: disable-next-line(unsafe-cheatcode)
         vm.writeFile(ADDRESSES_FILE, content);
         console.log("\nFHEVMHostAddresses.sol written. Run `forge build` then DeployFHEVMHost.s.sol.");
     }

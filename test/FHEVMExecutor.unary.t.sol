@@ -107,6 +107,7 @@ contract FHEVMExecutorUnaryTest is ExecutorDeployer {
         bytes32 result = executor.fheNeg(ct);
         uint256 expected;
         unchecked {
+            // forge-lint: disable-next-line(unsafe-typecast)
             expected = uint256(uint8(-int8(int256(uint256(a)))));
         }
         assertEq(_readPlaintext(result), expected);

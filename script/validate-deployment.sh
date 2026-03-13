@@ -1,27 +1,19 @@
 #!/usr/bin/env bash
 # Validates that all FHEVM host contracts are deployed and initialized at
-# both the computed addresses (from FHEVMHostAddresses.sol) and, optionally,
-# the Zama localConfig addresses.
+# the addresses declared in FHEVMHostAddresses.sol.
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 source "$REPO_ROOT/script/lib/deploy-common.sh"
 
-load_dotenv_if_present "$REPO_ROOT/.env"
+if [[ -z "${RPC_URL:-}" ]]; then
+    load_dotenv_if_present "$REPO_ROOT/.env"
+fi
 
 : "${RPC_URL:?RPC_URL is required}"
 
-VALIDATE_ZAMA_ADDRESSES="${VALIDATE_ZAMA_ADDRESSES:-0}"
-
 ERC1967_IMPL_SLOT="0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc"
-
-ZAMA_ACL="0x50157CFfD6bBFA2DECe204a89ec419c23ef5755D"
-ZAMA_EXECUTOR="0xe3a9105a3a932253A70F126eb1E3b589C643dD24"
-ZAMA_KMS_VERIFIER="0x901F8942346f7AB3a01F6D7613119Bca447Bb030"
-ZAMA_INPUT_VERIFIER="0x36772142b74871f255CbD7A3e89B401d3e45825f"
-ZAMA_HCU_LIMIT="0x5f3f1dBD7B74C6B46e8c44f98792A1dAf8d69154"
-ZAMA_PAUSER_SET="0xb7278A61aa25c888815aFC32Ad3cC52fF24fE575"
 
 errors=0
 
@@ -73,26 +65,6 @@ for pair in \
         assert_has_impl "$label" "$addr"
     fi
 done
-
-if is_truthy "$VALIDATE_ZAMA_ADDRESSES"; then
-    echo ""
-    echo "=== Validating Zama localConfig addresses ==="
-
-    for pair in \
-        "ACL:$ZAMA_ACL" \
-        "FHEVMExecutor:$ZAMA_EXECUTOR" \
-        "KMSVerifier:$ZAMA_KMS_VERIFIER" \
-        "InputVerifier:$ZAMA_INPUT_VERIFIER" \
-        "HCULimit:$ZAMA_HCU_LIMIT" \
-        "PauserSet:$ZAMA_PAUSER_SET"; do
-        label="${pair%%:*}"
-        addr="${pair#*:}"
-        assert_has_code "Zama $label" "$addr"
-        if [[ "$label" != "PauserSet" ]]; then
-            assert_has_impl "Zama $label" "$addr"
-        fi
-    done
-fi
 
 echo ""
 if [[ "$errors" -gt 0 ]]; then
