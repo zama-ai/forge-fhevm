@@ -20,6 +20,7 @@ import {
 } from "@fhevm/host-contracts/addresses/FHEVMHostAddresses.sol";
 import {FheType} from "@fhevm/host-contracts/contracts/shared/FheType.sol";
 import {FHEVMExecutor} from "@fhevm/host-contracts/contracts/FHEVMExecutor.sol";
+import {DeployableERC1967Proxy} from "./DeployableERC1967Proxy.sol";
 import {PlaintextDBMixin} from "./PlaintextDBMixin.sol";
 import {InputProofHelper} from "./InputProofHelper.sol";
 import {KMSDecryptionProofHelper} from "./KMSDecryptionProofHelper.sol";
@@ -58,7 +59,7 @@ abstract contract FhevmTest is PlaintextDBMixin {
     bytes internal constant EMPTY_EXTRA_DATA = hex"00";
     uint256 internal constant DEFAULT_USER_DECRYPT_DURATION_DAYS = 1;
     address internal constant PROXY_OWNER = address(0xBEEF);
-    string internal constant ERC1967_PROXY_ARTIFACT = "ERC1967Proxy.sol:ERC1967Proxy";
+    string internal constant ERC1967_PROXY_ARTIFACT = "DeployableERC1967Proxy.sol:DeployableERC1967Proxy";
     FHEVMExecutor internal _executor;
     ACL internal _acl;
     InputVerifier internal _inputVerifier;
