@@ -26,6 +26,7 @@ import {InputProofHelper} from "./InputProofHelper.sol";
 import {KMSDecryptionProofHelper} from "./KMSDecryptionProofHelper.sol";
 import {UserDecryptHelper} from "./UserDecryptHelper.sol";
 import {CleartextArithmetic} from "./cleartext/CleartextArithmetic.sol";
+import {HCULimitNoDepthCap} from "./HCULimitNoDepthCap.sol";
 
 import {
     ebool,
@@ -90,6 +91,17 @@ abstract contract FhevmTest is PlaintextDBMixin {
         underlyingToken.approve(address(wrapper), type(uint256).max);
         wrapper.wrap(user, amount);
         vm.stopPrank();
+    }
+
+    /// @notice Relaxes only the sequential HCU depth cap for subsequent FHE operations.
+    /// @dev Keeps the host contract's total per-transaction HCU accounting enabled, but swaps
+    /// the HCULimit implementation behind the test proxy for a variant that no longer reverts
+    /// on deep handle chains. This is useful for end-to-end tests whose orchestration is heavier
+    /// than the individual production calls they are trying to validate.
+    function disableHCUDepthLimit() internal {
+        address relaxedHcuLimit = address(new HCULimitNoDepthCap());
+        vm.prank(PROXY_OWNER);
+        EmptyUUPSProxy(payable(hcuLimitAdd)).upgradeToAndCall(relaxedHcuLimit, "");
     }
 
     /// @notice Encrypts a boolean for the given target contract.
