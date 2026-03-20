@@ -1,4 +1,11 @@
 [[dependencies]]
+name = "@encrypted-types"
+version = "0.0.4"
+url = "https://soldeer-revisions.s3.amazonaws.com/@encrypted-types/0_0_4_17-03-2026_15:04:04_encrypted-types.zip"
+checksum = "bd52cab2aaeb7083892adab700e292a5b93d9a7f321f1eb1e3aef6d7f86f2977"
+integrity = "443255d91dbfb920c9fabf76338db99ae2a60f6aefcff5cd79c21fda8c504707"
+
+[[dependencies]]
 name = "@openzeppelin-confidential-contracts"
 version = "6edd293"
 git = "https://github.com/OpenZeppelin/openzeppelin-confidential-contracts.git"
@@ -17,12 +24,6 @@ version = "5.1.0"
 url = "https://soldeer-revisions.s3.amazonaws.com/@openzeppelin-contracts-upgradeable/5_1_0_19-10-2024_10:28:58_contracts-upgradeable.zip"
 checksum = "87854223d14941d6fda3d78d900217e79e25755ea5bc48beca035766fa6a4e7e"
 integrity = "826fb621339dcee4261f848b283ec86364743d3c289d61f621747d95e315215a"
-
-[[dependencies]]
-name = "encrypted-types"
-version = "0.0.4"
-git = "https://github.com/confidential-token-association/encrypted-types.git"
-rev = "2d97522979fdf00f3dbb5ab7d1ade3b49c07f795"
 
 [[dependencies]]
 name = "fhevm"

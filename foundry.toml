@@ -12,6 +12,7 @@ bytecode_hash = "none"
 fs_permissions = [
     { access = "write", path = "src/fhevm-host/addresses/FHEVMHostAddresses.sol" },
 ]
+remappings = ["encrypted-types/=dependencies/@encrypted-types-0.0.4/"]
 
 [fuzz]
 runs = 256
@@ -29,7 +30,7 @@ exclude_lints = ["asm-keccak256", "mixed-case-function"]
 forge-std = "1.14.0"
 fhevm = { version = "0.11.1", git = "https://github.com/zama-ai/fhevm.git", rev = "2458fa9c2c78b7d84ef55ff0754f6bd80c4a15f6"}
 "@openzeppelin-confidential-contracts" = { version = "6edd293", git = "https://github.com/OpenZeppelin/openzeppelin-confidential-contracts.git", rev = "6edd293" }
-encrypted-types = { version = "0.0.4", git = "https://github.com/confidential-token-association/encrypted-types.git", tag = "v0.0.4" }
+"@encrypted-types" = "0.0.4"
 
 [soldeer]
 remappings_version = false
