@@ -6,6 +6,13 @@ checksum = "bd52cab2aaeb7083892adab700e292a5b93d9a7f321f1eb1e3aef6d7f86f2977"
 integrity = "443255d91dbfb920c9fabf76338db99ae2a60f6aefcff5cd79c21fda8c504707"
 
 [[dependencies]]
+name = "@fhevm-solidity"
+version = "0.11.1"
+url = "https://soldeer-revisions.s3.amazonaws.com/@fhevm-solidity/0_11_1_23-03-2026_15:50:59_library-solidity.zip"
+checksum = "09f78377b1e0429b09669e5f78bffa2cfb98b641a64a349dea0776ec68379dc6"
+integrity = "67f415709d30b01d3876addb7e5bbaf3efc119cebe81dda10fb495163297b763"
+
+[[dependencies]]
 name = "@openzeppelin-confidential-contracts"
 version = "6edd293"
 git = "https://github.com/OpenZeppelin/openzeppelin-confidential-contracts.git"
@@ -24,12 +31,6 @@ version = "5.1.0"
 url = "https://soldeer-revisions.s3.amazonaws.com/@openzeppelin-contracts-upgradeable/5_1_0_19-10-2024_10:28:58_contracts-upgradeable.zip"
 checksum = "87854223d14941d6fda3d78d900217e79e25755ea5bc48beca035766fa6a4e7e"
 integrity = "826fb621339dcee4261f848b283ec86364743d3c289d61f621747d95e315215a"
-
-[[dependencies]]
-name = "fhevm"
-version = "0.11.1"
-git = "https://github.com/zama-ai/fhevm.git"
-rev = "2458fa9c2c78b7d84ef55ff0754f6bd80c4a15f6"
 
 [[dependencies]]
 name = "forge-std"
