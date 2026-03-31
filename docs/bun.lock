@@ -1,5 +1,6 @@
 {
   "lockfileVersion": 1,
+  "configVersion": 0,
   "workspaces": {
     "": {
       "name": "forge-fhevm-docs",
@@ -7,6 +8,9 @@
         "vitepress": "^1.6.3",
       },
     },
+  },
+  "overrides": {
+    "axios": "1.14.0",
   },
   "packages": {
     "@algolia/abtesting": ["@algolia/abtesting@1.15.0", "", { "dependencies": { "@algolia/client-common": "5.49.0", "@algolia/requester-browser-xhr": "5.49.0", "@algolia/requester-fetch": "5.49.0", "@algolia/requester-node-http": "5.49.0" } }, "sha512-D1QZ8dQx5zC9yrxNao9ER9bojmmzUdL1i2P9waIRiwnZ5fI26YswcCd6VHR/Q4W3PASfVf2My4YQ2FhGGDewTQ=="],
