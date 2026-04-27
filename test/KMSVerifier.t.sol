@@ -37,7 +37,7 @@ contract KMSVerifierTest is KMSDecryptionProofTestHelper {
     }
 
     function test_deployment_version() public view {
-        assertEq(kmsVerifierContract.getVersion(), "KMSVerifier v0.1.0");
+        assertEq(kmsVerifierContract.getVersion(), "KMSVerifier v0.2.0");
     }
 
     function test_verify_happyPath_singleHandle() public {

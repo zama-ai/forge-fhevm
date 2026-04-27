@@ -507,7 +507,9 @@ abstract contract FhevmTest is PlaintextDBMixin {
         address hcuLimitImpl = address(new HCULimit());
         vm.prank(PROXY_OWNER);
         EmptyUUPSProxy(hcuLimitAdd)
-            .upgradeToAndCall(hcuLimitImpl, abi.encodeCall(HCULimit.initializeFromEmptyProxy, ()));
+            .upgradeToAndCall(
+                hcuLimitImpl, abi.encodeCall(HCULimit.initializeFromEmptyProxy, (20_000_000, 5_000_000, 20_000_000))
+            );
     }
 
     function _deployRealExecutor() internal {

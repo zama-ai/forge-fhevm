@@ -10,25 +10,27 @@ pragma solidity ^0.8.24;
 import {HCULimit} from "@fhevm/host-contracts/contracts/HCULimit.sol";
 
 contract HCULimitNoDepthCap is HCULimit {
-    /// @dev Diff from base: still charges `opHCU` against the transaction, but does not
-    /// compare the derived handle depth against `MAX_HOMOMORPHIC_COMPUTE_UNITS_DEPTH_PER_TX`.
-    function _adjustAndCheckFheTransactionLimitOneOp(uint256 opHCU, bytes32 op1, bytes32 result)
+    /// @dev Diff from base: still charges `opHCU` against the transaction (and block cap),
+    /// but does not compare the derived handle depth against the configured depth limit.
+    function _adjustAndCheckFheTransactionLimitOneOp(uint256 opHCU, address caller, bytes32 op1, bytes32 result)
         internal
         virtual
         override
     {
-        _updateAndVerifyHCUTransactionLimit(opHCU);
+        _updateAndVerifyHCUTransactionLimit(opHCU, caller);
         _setHCUForHandle(result, opHCU + _getHCUForHandle(op1));
     }
 
     /// @dev Diff from base: preserves the same depth propagation rule (`opHCU + max(input depths)`)
     /// while removing the revert that normally blocks deeper intermediate handles.
-    function _adjustAndCheckFheTransactionLimitTwoOps(uint256 opHCU, bytes32 op1, bytes32 op2, bytes32 result)
-        internal
-        virtual
-        override
-    {
-        _updateAndVerifyHCUTransactionLimit(opHCU);
+    function _adjustAndCheckFheTransactionLimitTwoOps(
+        uint256 opHCU,
+        address caller,
+        bytes32 op1,
+        bytes32 op2,
+        bytes32 result
+    ) internal virtual override {
+        _updateAndVerifyHCUTransactionLimit(opHCU, caller);
         _setHCUForHandle(result, opHCU + _maxHandleHcu(op1, op2));
     }
 
@@ -36,12 +38,13 @@ contract HCULimitNoDepthCap is HCULimit {
     /// but stores the computed depth unconditionally instead of enforcing the depth cap.
     function _adjustAndCheckFheTransactionLimitThreeOps(
         uint256 opHCU,
+        address caller,
         bytes32 op1,
         bytes32 op2,
         bytes32 op3,
         bytes32 result
     ) internal virtual override {
-        _updateAndVerifyHCUTransactionLimit(opHCU);
+        _updateAndVerifyHCUTransactionLimit(opHCU, caller);
         uint256 maxInputHcu = _maxHcu(_getHCUForHandle(op1), _maxHcu(_getHCUForHandle(op2), _getHCUForHandle(op3)));
         _setHCUForHandle(result, opHCU + maxInputHcu);
     }
