@@ -255,6 +255,7 @@ load_artifacts() {
     INIT_CALLDATA="$(cast calldata "initializeFromEmptyProxy()")"
     KMS_INIT_CALLDATA="$(cast calldata "initializeFromEmptyProxy(address,uint64,address[],uint256)" "$DECRYPTION_ADDRESS" "$CHAIN_ID_GATEWAY" "[$KMS_SIGNER]" "$PUBLIC_DECRYPTION_THRESHOLD")"
     INPUT_VERIFIER_INIT_CALLDATA="$(cast calldata "initializeFromEmptyProxy(address,uint64,address[],uint256)" "$INPUT_VERIFICATION_ADDRESS" "$CHAIN_ID_GATEWAY" "[$COPROCESSOR_SIGNER]" "$COPROCESSOR_THRESHOLD")"
+    HCU_LIMIT_INIT_CALLDATA="$(cast calldata "initializeFromEmptyProxy(uint48,uint48,uint48)" "${HCU_CAP_PER_BLOCK:-20000000}" "${MAX_HCU_DEPTH_PER_TX:-5000000}" "${MAX_HCU_PER_TX:-20000000}")"
 }
 
 deploy_to_target() {
@@ -302,7 +303,7 @@ deploy_to_target() {
         log "InputVerifier deployed at $INPUT_VERIFIER_ADD"
 
         materialize_proxy "$HCU_LIMIT_ADD" "$empty_proxy_impl"
-        upgrade_proxy "$HCU_LIMIT_ADD" "$hcu_limit_impl" "$INIT_CALLDATA"
+        upgrade_proxy "$HCU_LIMIT_ADD" "$hcu_limit_impl" "$HCU_LIMIT_INIT_CALLDATA"
         log "HCULimit deployed at $HCU_LIMIT_ADD"
 
         rpc setCode "$PAUSER_SET_ADD" "$PAUSER_SET_RUNTIME_CODE"

@@ -203,7 +203,10 @@ contract DeployFHEVMHost is Script {
         {
             HCULimit hcuImpl2 = new HCULimit();
             UUPSUpgradeable(hcuLimitAdd)
-                .upgradeToAndCall(address(hcuImpl2), abi.encodeCall(HCULimit.initializeFromEmptyProxy, ()));
+                .upgradeToAndCall(
+                    address(hcuImpl2),
+                    abi.encodeCall(HCULimit.initializeFromEmptyProxy, (20_000_000, 5_000_000, 20_000_000))
+                );
             console.log("HCULimit upgraded:         ", hcuLimitAdd);
         }
 

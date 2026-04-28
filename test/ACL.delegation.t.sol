@@ -31,10 +31,10 @@ contract ACLDelegationTest is ACLTestBase {
         aclContract.delegateForUserDecryption(BOB, DAPP, uint64(block.timestamp + 2 hours));
     }
 
-    function test_delegate_revertsWhenExpirationTooSoon() public {
+    function test_delegate_revertsWhenExpirationInThePast() public {
         vm.prank(ALICE);
-        vm.expectRevert(ACL.ExpirationDateBeforeOneHour.selector);
-        aclContract.delegateForUserDecryption(BOB, DAPP, uint64(block.timestamp + 59 minutes));
+        vm.expectRevert(ACL.ExpirationDateInThePast.selector);
+        aclContract.delegateForUserDecryption(BOB, DAPP, uint64(block.timestamp));
     }
 
     function test_delegate_revertsWhenSenderIsContract() public {

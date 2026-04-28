@@ -66,7 +66,9 @@ abstract contract ExecutorDeployer is PlaintextDBMixin {
 
         vm.prank(OWNER);
         EmptyUUPSProxy(hcuLimitAdd)
-            .upgradeToAndCall(hcuLimitImpl, abi.encodeCall(HCULimit.initializeFromEmptyProxy, ()));
+            .upgradeToAndCall(
+                hcuLimitImpl, abi.encodeCall(HCULimit.initializeFromEmptyProxy, (20_000_000, 5_000_000, 20_000_000))
+            );
 
         deployCodeTo(
             "test/helpers/ExecutorDeployer.sol:DeployableERC1967Proxy",
