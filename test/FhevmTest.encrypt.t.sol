@@ -126,6 +126,34 @@ contract FhevmTestEncryptTest is FhevmTest {
         );
     }
 
+    function test_encryptList_works() public {
+        uint256[] memory values = new uint256[](7);
+        values[0] = 1;
+        values[1] = 13;
+        values[2] = 513;
+        values[3] = 91_337;
+        values[4] = type(uint64).max - 7;
+        values[5] = type(uint256).max - 5;
+        values[6] = uint256(uint160(address(0xA11CE)));
+
+        FheType[] memory fheTypes = new FheType[](7);
+        fheTypes[0] = FheType.Bool;
+        fheTypes[1] = FheType.Uint8;
+        fheTypes[2] = FheType.Uint16;
+        fheTypes[3] = FheType.Uint32;
+        fheTypes[4] = FheType.Uint64;
+        fheTypes[5] = FheType.Uint256;
+        fheTypes[6] = FheType.Uint160;
+
+        (bytes32[] memory handles, bytes memory proof) = encrypt(values, fheTypes, address(this));
+
+        for (uint256 i; i < values.length; ++i) {
+            assertEq(uint8(handles[i][30]), uint8(fheTypes[i]));
+            assertEq(_plaintexts[handles[i]], values[i]);
+            assertEq(_executor.verifyInput(handles[i], address(this), proof, fheTypes[i]), handles[i]);
+        }
+    }
+
     function test_encrypt_withExplicitUserAndContract() public {
         address user = address(0xA11CE);
         address target = address(0xBEEF);
