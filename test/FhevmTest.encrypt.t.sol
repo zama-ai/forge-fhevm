@@ -154,6 +154,24 @@ contract FhevmTestEncryptTest is FhevmTest {
         }
     }
 
+    /// forge-config: default.allow_internal_expect_revert = true
+    function test_encryptList_withMismatchedValuesAndTypesReverts() public {
+        uint256[] memory values = new uint256[](2);
+        FheType[] memory fheTypes = new FheType[](3);
+
+        vm.expectRevert(abi.encodeWithSelector(EncryptInputLengthMismatch.selector, 2, 3));
+        encrypt(values, fheTypes, address(this));
+    }
+
+    /// forge-config: default.allow_internal_expect_revert = true
+    function test_encryptList_withTooManyValuesReverts() public {
+        uint256[] memory values = new uint256[](300);
+        FheType[] memory fheTypes = new FheType[](300);
+
+        vm.expectRevert(EncryptInputTooLong.selector);
+        encrypt(values, fheTypes, address(this));
+    }
+
     function test_encrypt_withExplicitUserAndContract() public {
         address user = address(0xA11CE);
         address target = address(0xBEEF);
