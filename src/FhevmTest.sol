@@ -53,6 +53,8 @@ abstract contract FhevmTest is PlaintextDBMixin {
     error UserNotAuthorizedForDecrypt(bytes32 handle, address userAddress);
     error ContractNotAuthorizedForDecrypt(bytes32 handle, address contractAddress);
     error InvalidUserDecryptSignature();
+    error EncryptInputLengthMismatch(uint256 valuesLength, uint256 fheTypesLength);
+    error EncryptInputTooLong();
 
     uint256 internal constant MOCK_INPUT_SIGNER_PK = 0x7ec8ada6642fc4ccfb7729bc29c17cf8d21b61abd5642d1db992c0b8672ab901;
     uint256 internal constant MOCK_KMS_SIGNER_PK = 0x388b7680e4e1afa06efbfd45cdd1fe39f3c6af381df6555a19661f283b97de91;
@@ -249,6 +251,29 @@ abstract contract FhevmTest is PlaintextDBMixin {
     {
         (bytes32 handle, bytes memory inputProof) = _encrypt(uint256(uint160(value)), FheType.Uint160, user, target);
         return (externalEaddress.wrap(handle), inputProof);
+    }
+
+    /// @notice Encrypts a list of values with corresponding FHE types for the given target contract.
+    /// @param values The clear values to encrypt as uint256, normalized according to their corresponding FHE types.
+    /// @param fheTypes The FHE types corresponding to each value.
+    /// @param target The contract expected to call `FHE.fromExternal`.
+    function encrypt(uint256[] memory values, FheType[] memory fheTypes, address target)
+        internal
+        returns (bytes32[] memory handles, bytes memory inputProof)
+    {
+        return encrypt(values, fheTypes, address(this), target);
+    }
+
+    /// @notice Encrypts a list of values with corresponding FHE types for an explicit user/target pair.
+    /// @param values The clear values to encrypt as uint256, normalized according to their corresponding FHE types.
+    /// @param fheTypes The FHE types corresponding to each value.
+    /// @param user The user embedded in the input proof authorization.
+    /// @param target The contract expected to call `FHE.fromExternal`.
+    function encrypt(uint256[] memory values, FheType[] memory fheTypes, address user, address target)
+        internal
+        returns (bytes32[] memory handles, bytes memory inputProof)
+    {
+        return _encrypt(values, fheTypes, user, target);
     }
 
     /// @notice Decrypts handles that were marked as publicly decryptable and returns a KMS-style proof.
@@ -577,15 +602,44 @@ abstract contract FhevmTest is PlaintextDBMixin {
         internal
         returns (bytes32 handle, bytes memory inputProof)
     {
-        _encryptNonce += 1;
+        uint256[] memory values = new uint256[](1);
+        values[0] = value;
+        FheType[] memory fheTypes = new FheType[](1);
+        fheTypes[0] = fheType;
 
-        bytes memory ciphertext = abi.encodePacked(keccak256(abi.encodePacked(value, uint8(fheType), _encryptNonce)));
-        handle = InputProofHelper.computeInputHandle(ciphertext, 0, fheType, aclAdd, uint64(block.chainid));
+        (bytes32[] memory handles, bytes memory proof) = _encrypt(values, fheTypes, user, target);
+        handle = handles[0];
+        inputProof = proof;
+    }
 
-        _plaintexts[handle] = CleartextArithmetic.normalizePlaintextToType(value, uint8(fheType));
+    function _encrypt(uint256[] memory values, FheType[] memory fheTypes, address user, address target)
+        internal
+        returns (bytes32[] memory handles, bytes memory inputProof)
+    {
+        uint256 valuesLength = values.length;
+        if (valuesLength != fheTypes.length) {
+            revert EncryptInputLengthMismatch(valuesLength, fheTypes.length);
+        }
+        if (valuesLength > type(uint8).max) {
+            revert EncryptInputTooLong();
+        }
 
-        bytes32[] memory handles = new bytes32[](1);
-        handles[0] = handle;
+        handles = new bytes32[](valuesLength);
+        for (uint256 i; i < valuesLength; ++i) {
+            uint256 value = values[i];
+            FheType fheType = fheTypes[i];
+
+            _encryptNonce += 1;
+
+            bytes memory ciphertext =
+                abi.encodePacked(keccak256(abi.encodePacked(value, uint8(fheType), _encryptNonce)));
+            bytes32 handle =
+                InputProofHelper.computeInputHandle(ciphertext, uint8(i), fheType, aclAdd, uint64(block.chainid));
+
+            _plaintexts[handle] = CleartextArithmetic.normalizePlaintextToType(value, uint8(fheType));
+
+            handles[i] = handle;
+        }
 
         bytes32 domainSeparator = InputProofHelper.computeInputVerifierDomainSeparator(inputVerifierAdd, block.chainid);
         bytes32 digest = InputProofHelper.computeInputVerificationDigest(
