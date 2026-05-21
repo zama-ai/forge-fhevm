@@ -54,6 +54,7 @@ abstract contract FhevmTest is PlaintextDBMixin {
     error ContractNotAuthorizedForDecrypt(bytes32 handle, address contractAddress);
     error InvalidUserDecryptSignature();
     error EncryptInputLengthMismatch(uint256 valuesLength, uint256 fheTypesLength);
+    error EncryptInputTooLong();
 
     uint256 internal constant MOCK_INPUT_SIGNER_PK = 0x7ec8ada6642fc4ccfb7729bc29c17cf8d21b61abd5642d1db992c0b8672ab901;
     uint256 internal constant MOCK_KMS_SIGNER_PK = 0x388b7680e4e1afa06efbfd45cdd1fe39f3c6af381df6555a19661f283b97de91;
@@ -618,6 +619,9 @@ abstract contract FhevmTest is PlaintextDBMixin {
         uint256 valuesLength = values.length;
         if (valuesLength != fheTypes.length) {
             revert EncryptInputLengthMismatch(valuesLength, fheTypes.length);
+        }
+        if (valuesLength > type(uint8).max) {
+            revert EncryptInputTooLong();
         }
 
         handles = new bytes32[](valuesLength);
