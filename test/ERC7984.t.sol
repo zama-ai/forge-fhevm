@@ -314,7 +314,7 @@ contract ERC7984Test is FhevmTest {
         vm.recordLogs();
         _transferWithInput(holder, holder, recipient, 400);
 
-        Vm.Log[] memory logs = vm.getRecordedLogs();
+        Vm.Log[] memory logs = getRecordedLogs();
         Vm.Log[] memory tokenLogs = _filterLogsByAddress(logs, address(token));
         assertEq(tokenLogs.length, 1);
         assertEq(address(uint160(uint256(tokenLogs[0].topics[1]))), holder);
@@ -327,7 +327,7 @@ contract ERC7984Test is FhevmTest {
         vm.recordLogs();
         _transferWithInput(holder, holder, recipient, 400);
 
-        euint64 transferAmount = _getTransferAmountHandle(vm.getRecordedLogs());
+        euint64 transferAmount = _getTransferAmountHandle(getRecordedLogs());
         assertEq(_decryptHandle(HOLDER_PK, holder, transferAmount), 400);
     }
 
@@ -336,7 +336,7 @@ contract ERC7984Test is FhevmTest {
         vm.recordLogs();
         _transferWithInput(holder, holder, recipient, 400);
 
-        euint64 transferAmount = _getTransferAmountHandle(vm.getRecordedLogs());
+        euint64 transferAmount = _getTransferAmountHandle(getRecordedLogs());
         assertEq(_decryptHandle(RECIPIENT_PK, recipient, transferAmount), 400);
     }
 
@@ -345,7 +345,7 @@ contract ERC7984Test is FhevmTest {
         vm.recordLogs();
         _transferWithInput(holder, holder, recipient, 400);
 
-        euint64 transferAmount = _getTransferAmountHandle(vm.getRecordedLogs());
+        euint64 transferAmount = _getTransferAmountHandle(getRecordedLogs());
         bytes32 handle = euint64.unwrap(transferAmount);
         bytes memory signature = signUserDecrypt(THIRD_PARTY_PK, address(token));
 
@@ -362,7 +362,7 @@ contract ERC7984Test is FhevmTest {
         vm.prank(operator);
         token.confidentialTransferFrom(holder, recipient, amount, proof);
 
-        euint64 transferAmount = _getTransferAmountHandle(vm.getRecordedLogs());
+        euint64 transferAmount = _getTransferAmountHandle(getRecordedLogs());
         assertEq(_decryptHandle(HOLDER_PK, holder, transferAmount), 400);
     }
 
@@ -375,7 +375,7 @@ contract ERC7984Test is FhevmTest {
         vm.prank(operator);
         token.confidentialTransferFrom(holder, recipient, amount, proof);
 
-        euint64 transferAmount = _getTransferAmountHandle(vm.getRecordedLogs());
+        euint64 transferAmount = _getTransferAmountHandle(getRecordedLogs());
         assertEq(_decryptHandle(RECIPIENT_PK, recipient, transferAmount), 400);
     }
 
@@ -388,7 +388,7 @@ contract ERC7984Test is FhevmTest {
         vm.prank(operator);
         token.confidentialTransferFrom(holder, recipient, amount, proof);
 
-        euint64 transferAmount = _getTransferAmountHandle(vm.getRecordedLogs());
+        euint64 transferAmount = _getTransferAmountHandle(getRecordedLogs());
         bytes32 handle = euint64.unwrap(transferAmount);
         bytes memory signature = signUserDecrypt(THIRD_PARTY_PK, address(token));
 
@@ -578,8 +578,7 @@ contract ERC7984Test is FhevmTest {
         vm.recordLogs();
         _transferAndCallWithInput(holder, holder, address(receiver), 1000, abi.encode(uint8(0)));
 
-        Vm.Log[] memory logs = vm.getRecordedLogs();
-        _ingestExecutorLogs(logs);
+        Vm.Log[] memory logs = getRecordedLogs();
         Vm.Log[] memory tokenLogs = _filterLogsByAddress(logs, address(token));
         assertEq(tokenLogs.length, 2);
 
@@ -618,7 +617,7 @@ contract ERC7984Test is FhevmTest {
         _processNewLogs();
         vm.recordLogs();
         _transferWithInput(holder, holder, recipient, 400);
-        euint64 transferAmount = _getTransferAmountHandle(vm.getRecordedLogs());
+        euint64 transferAmount = _getTransferAmountHandle(getRecordedLogs());
 
         vm.expectEmit(address(token));
         emit ERC7984.AmountDiscloseRequested(transferAmount, recipient);
@@ -769,20 +768,10 @@ contract ERC7984Test is FhevmTest {
         decryptionProof = KMSDecryptionProofHelper.assembleDecryptionProof(signatures, EMPTY_EXTRA_DATA);
     }
 
-    function _getTransferAmountHandle(Vm.Log[] memory logs) internal returns (euint64) {
-        _ingestExecutorLogs(logs);
-
+    function _getTransferAmountHandle(Vm.Log[] memory logs) internal view returns (euint64) {
         Vm.Log[] memory tokenLogs = _filterLogsByAddress(logs, address(token));
         require(tokenLogs.length > 0, "missing token logs");
         return euint64.wrap(tokenLogs[0].topics[3]);
-    }
-
-    function _ingestExecutorLogs(Vm.Log[] memory logs) internal {
-        for (uint256 i = 0; i < logs.length; i++) {
-            if (logs[i].emitter == fhevmExecutorAdd) {
-                _dispatchFheEvent(logs[i]);
-            }
-        }
     }
 
     /// @notice Grants persistent ACL permission on `handle` from `handleOwner` to `to`.
