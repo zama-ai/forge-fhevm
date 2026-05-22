@@ -7,7 +7,6 @@ import {KMSDecryptionProofHelper} from "../src/KMSDecryptionProofHelper.sol";
 import {FoundryERC7984Mock} from "./helpers/FoundryERC7984Mock.sol";
 
 import {FHE, euint64, externalEuint64} from "@fhevm/solidity/lib/FHE.sol";
-import {fhevmExecutorAdd} from "@fhevm/host-contracts/addresses/FHEVMHostAddresses.sol";
 import {IERC7984} from "@openzeppelin/confidential-contracts/interfaces/IERC7984.sol";
 import {IERC7984ERC20Wrapper} from "@openzeppelin/confidential-contracts/interfaces/IERC7984ERC20Wrapper.sol";
 import {IERC7984Rwa} from "@openzeppelin/confidential-contracts/interfaces/IERC7984Rwa.sol";
