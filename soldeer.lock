@@ -14,9 +14,9 @@ integrity = "67f415709d30b01d3876addb7e5bbaf3efc119cebe81dda10fb495163297b763"
 
 [[dependencies]]
 name = "@openzeppelin-confidential-contracts"
-version = "6edd293"
+version = "7ac7cee"
 git = "https://github.com/OpenZeppelin/openzeppelin-confidential-contracts.git"
-rev = "6edd293165d6dc1fd29fffaa391b370b1888a70d"
+rev = "7ac7cee"
 
 [[dependencies]]
 name = "@openzeppelin-contracts"

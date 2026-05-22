@@ -27,7 +27,7 @@ exclude_lints = ["asm-keccak256", "mixed-case-function"]
 "@openzeppelin-contracts" = "5.1.0"
 "@openzeppelin-contracts-upgradeable" = "5.1.0"
 forge-std = "1.14.0"
-"@openzeppelin-confidential-contracts" = { version = "6edd293", git = "https://github.com/OpenZeppelin/openzeppelin-confidential-contracts.git", rev = "6edd293" }
+"@openzeppelin-confidential-contracts" = { version = "7ac7cee", git = "https://github.com/OpenZeppelin/openzeppelin-confidential-contracts.git", rev = "7ac7cee" }
 "@encrypted-types" = "0.0.4"
 "@fhevm-solidity" = "0.11.1"
 
