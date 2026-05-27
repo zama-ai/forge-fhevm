@@ -14,6 +14,10 @@ abstract contract PlaintextDBMixin is Test, FHEEvents {
 
     function _processNewLogs() internal {
         Vm.Log[] memory logs = vm.getRecordedLogs();
+        _processNewLogs(logs);
+    }
+
+    function _processNewLogs(Vm.Log[] memory logs) internal {
         for (uint256 i = 0; i < logs.length; i++) {
             if (logs[i].emitter != fhevmExecutorAdd) {
                 continue;

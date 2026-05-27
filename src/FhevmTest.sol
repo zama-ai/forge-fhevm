@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: BSD-3-Clause-Clear
 pragma solidity ^0.8.27;
 
+import {Vm} from "forge-std/Vm.sol";
 import {ACL} from "@fhevm/host-contracts/contracts/ACL.sol";
 import {HCULimit} from "@fhevm/host-contracts/contracts/HCULimit.sol";
 import {InputVerifier} from "@fhevm/host-contracts/contracts/InputVerifier.sol";
@@ -486,6 +487,16 @@ abstract contract FhevmTest is PlaintextDBMixin {
         );
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(userPk, digest);
         signature = abi.encodePacked(r, s, v);
+    }
+
+    /// @notice Retrieves the recorded logs and processes FHE events.
+    /// @dev `vm.getRecordedLogs()` consumes recorded logs. Calling the Vm cheatcode directly in tests that
+    /// inspect events bypasses FHEVM log processing. Use this helper instead so logs are returned and FHEVM
+    /// effects are applied during event testing.
+    /// @return logs The recorded logs.
+    function getRecordedLogs() internal returns (Vm.Log[] memory logs) {
+        logs = vm.getRecordedLogs();
+        _processNewLogs(logs);
     }
 
     function _deployAllContracts() internal {

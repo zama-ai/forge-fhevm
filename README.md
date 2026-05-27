@@ -8,6 +8,9 @@ forge-fhevm deploys the actual fhEVM host contracts (FHEVMExecutor, ACL, InputVe
 
 The only deviation from mainnet is the use of mock private keys for the input signer and KMS signer, enabling deterministic EIP-712 proof generation in tests.
 
+> [!TIP]
+> `vm.getRecordedLogs()` consumes recorded logs, which does not allow for FHE log processing when called directly in event inspection tests. Always use the `getRecordedLogs()` helper function to ensure logs are properly returned and fhEVM effects are correctly applied.
+
 ## Quick start
 
 Install and add the remapping:
