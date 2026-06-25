@@ -6,7 +6,7 @@ import {ZamaEthereumConfig} from "@fhevm/solidity/config/ZamaConfig.sol";
 import {FhevmTest} from "../src/FhevmTest.sol";
 import {FheType} from "@fhevm/host-contracts/contracts/shared/FheType.sol";
 
-import {externalEuint16, externalEuint64, externalEuint256} from "encrypted-types/EncryptedTypes.sol";
+import {externalEuint16, externalEuint64, externalEuint256, externalEaddress} from "encrypted-types/EncryptedTypes.sol";
 
 contract FhevmPublicDecryptVerifier is ZamaEthereumConfig {
     function verify(bytes32[] memory handles, bytes memory abiEncodedCleartexts, bytes memory decryptionProof)
@@ -49,8 +49,23 @@ contract FhevmTestPublicDecryptTest is FhevmTest {
         _acl.allowForDecryption(handles);
 
         (uint256[] memory cleartexts, bytes memory decryptionProof) = publicDecrypt(handles);
+        bytes memory abiEncodedCleartexts = abi.encodePacked(cleartexts);
+        bool verified = _kmsVerifier.verifyDecryptionEIP712KMSSignatures(handles, abiEncodedCleartexts, decryptionProof);
+        assertTrue(verified);
+    }
+
+    function test_publicDecrypt_addressZeroProofVerifiesAgainstProductionTupleEncoding() public {
+        (externalEaddress handle, bytes memory proof) = encryptAddress(address(0), address(this));
+
+        _executor.verifyInput(externalEaddress.unwrap(handle), address(this), proof, FheType.Uint160);
+        bytes32[] memory handles = new bytes32[](1);
+        handles[0] = externalEaddress.unwrap(handle);
+        _acl.allowForDecryption(handles);
+
+        (, bytes memory decryptionProof) = publicDecrypt(handles);
+
         bool verified =
-            _kmsVerifier.verifyDecryptionEIP712KMSSignatures(handles, abi.encode(cleartexts), decryptionProof);
+            _kmsVerifier.verifyDecryptionEIP712KMSSignatures(handles, abi.encode(address(0)), decryptionProof);
         assertTrue(verified);
     }
 
@@ -75,7 +90,8 @@ contract FhevmTestPublicDecryptTest is FhevmTest {
         assertEq(cleartexts[0], 11);
         assertEq(cleartexts[1], 22);
         assertEq(cleartexts[2], 33);
-        assertTrue(_kmsVerifier.verifyDecryptionEIP712KMSSignatures(handles, abi.encode(cleartexts), decryptionProof));
+        bytes memory abiEncodedCleartexts = abi.encodePacked(cleartexts);
+        assertTrue(_kmsVerifier.verifyDecryptionEIP712KMSSignatures(handles, abiEncodedCleartexts, decryptionProof));
     }
 
     function test_publicDecrypt_endToEndWithCheckSignatures() public {
@@ -89,7 +105,7 @@ contract FhevmTestPublicDecryptTest is FhevmTest {
         _acl.allowForDecryption(handles);
 
         (uint256[] memory cleartexts, bytes memory decryptionProof) = publicDecrypt(handles);
-        verifier.verify(handles, abi.encode(cleartexts), decryptionProof);
+        verifier.verify(handles, abi.encodePacked(cleartexts), decryptionProof);
     }
 
     function callPublicDecrypt(bytes32[] memory handles)
