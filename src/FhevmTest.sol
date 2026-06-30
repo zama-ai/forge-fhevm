@@ -294,18 +294,8 @@ abstract contract FhevmTest is PlaintextDBMixin {
             cleartexts[i] = _plaintexts[handles[i]];
         }
 
-        bytes memory abiEncodedCleartexts = abi.encode(cleartexts);
-        (, string memory name, string memory version, uint256 chainId, address verifyingContract,,) =
-            _kmsVerifier.eip712Domain();
-        bytes32 domainSeparator =
-            KMSDecryptionProofHelper.computeKMSDecryptionDomainSeparator(name, version, chainId, verifyingContract);
-        bytes32 digest = KMSDecryptionProofHelper.computeDecryptionDigest(
-            handles, abiEncodedCleartexts, EMPTY_EXTRA_DATA, domainSeparator
-        );
-
-        bytes[] memory signatures = new bytes[](1);
-        signatures[0] = _signDigest(MOCK_KMS_SIGNER_PK, digest);
-        decryptionProof = KMSDecryptionProofHelper.assembleDecryptionProof(signatures, EMPTY_EXTRA_DATA);
+        bytes memory abiEncodedCleartexts = abi.encodePacked(cleartexts);
+        decryptionProof = buildDecryptionProof(handles, abiEncodedCleartexts);
     }
 
     /// @notice Decrypts a single handle for a user after persistent ACL checks and user signature verification.

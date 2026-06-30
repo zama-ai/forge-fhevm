@@ -21,7 +21,7 @@ contract FhevmTestIntegrationTest is FhevmTest {
         handles[0] = euint64.unwrap(balance);
 
         (uint256[] memory cleartexts, bytes memory decryptionProof) = publicDecrypt(handles);
-        token.verifyPublicDecrypt(handles, abi.encode(cleartexts), decryptionProof);
+        token.verifyPublicDecrypt(handles, abi.encodePacked(cleartexts), decryptionProof);
 
         assertEq(cleartexts[0], 100);
     }
