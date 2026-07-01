@@ -243,6 +243,90 @@ contract FHEVMExecutorBitwiseTest is ExecutorDeployer {
     }
 
     // ──────────────────────────────────────────────
+    //  Rotation contract — cyclic, NOT clamp-to-zero.
+    //
+    //  Rotations wrap modulo the bit width: an over-rotation equals a rotation by
+    //  `amount % bitWidth` (never 0). This intentionally DIVERGES from shl/shr, which
+    //  saturate to 0 when the amount reaches the bit width. These tests pin that contract
+    //  so nobody later "aligns" rotations with the shift overshift behaviour.
+    // ──────────────────────────────────────────────
+
+    function test_fheRotl_byZero_isIdentity() public {
+        bytes32 lhs = _trivialEncrypt(0x81, FheType.Uint8);
+        bytes32 result = executor.fheRotl(lhs, bytes32(uint256(0)), bytes1(0x01));
+        assertEq(_readPlaintext(result), 0x81);
+    }
+
+    function test_fheRotr_byZero_isIdentity() public {
+        bytes32 lhs = _trivialEncrypt(0x81, FheType.Uint8);
+        bytes32 result = executor.fheRotr(lhs, bytes32(uint256(0)), bytes1(0x01));
+        assertEq(_readPlaintext(result), 0x81);
+    }
+
+    function test_fheRotl_byBitWidth_isIdentity_uint64() public {
+        bytes32 lhs = _trivialEncrypt(0xDEADBEEF, FheType.Uint64);
+        bytes32 result = executor.fheRotl(lhs, bytes32(uint256(64)), bytes1(0x01));
+        assertEq(_readPlaintext(result), 0xDEADBEEF);
+    }
+
+    function test_fheRotr_byBitWidth_isIdentity_uint64() public {
+        bytes32 lhs = _trivialEncrypt(0xDEADBEEF, FheType.Uint64);
+        bytes32 result = executor.fheRotr(lhs, bytes32(uint256(64)), bytes1(0x01));
+        assertEq(_readPlaintext(result), 0xDEADBEEF);
+    }
+
+    function test_fheRotl_overRotate_equalsModBitWidth_uint8() public {
+        // Over-rotating by 10 on a u8 equals rotating by 10 % 8 == 2 — NOT zero.
+        bytes32 lhs = _trivialEncrypt(0x81, FheType.Uint8);
+        bytes32 over = executor.fheRotl(lhs, bytes32(uint256(10)), bytes1(0x01));
+
+        bytes32 lhs2 = _trivialEncrypt(0x81, FheType.Uint8);
+        bytes32 exact = executor.fheRotl(lhs2, bytes32(uint256(2)), bytes1(0x01));
+
+        assertEq(_readPlaintext(over), _readPlaintext(exact));
+        // Sanity: 0x81 rotl 2 = 0b00000110 = 6, definitely not zero.
+        assertEq(_readPlaintext(over), 6);
+    }
+
+    function test_fheRotr_overRotate_equalsModBitWidth_encryptedRhs_uint8() public {
+        // Encrypted rotate amount of 10 on a u8 also wraps to 10 % 8 == 2.
+        bytes32 lhs = _trivialEncrypt(0x81, FheType.Uint8);
+        bytes32 rhs = _trivialEncrypt(10, FheType.Uint8);
+        bytes32 over = executor.fheRotr(lhs, rhs, bytes1(0x00));
+
+        bytes32 lhs2 = _trivialEncrypt(0x81, FheType.Uint8);
+        bytes32 exact = executor.fheRotr(lhs2, bytes32(uint256(2)), bytes1(0x01));
+
+        assertEq(_readPlaintext(over), _readPlaintext(exact));
+    }
+
+    function test_fheRotl_overRotate_equalsModBitWidth_uint64() public {
+        // Rotate by 70 on a u64 equals rotate by 70 % 64 == 6.
+        bytes32 lhs = _trivialEncrypt(0x0123456789ABCDEF, FheType.Uint64);
+        bytes32 over = executor.fheRotl(lhs, bytes32(uint256(70)), bytes1(0x01));
+
+        bytes32 lhs2 = _trivialEncrypt(0x0123456789ABCDEF, FheType.Uint64);
+        bytes32 exact = executor.fheRotl(lhs2, bytes32(uint256(6)), bytes1(0x01));
+
+        assertEq(_readPlaintext(over), _readPlaintext(exact));
+    }
+
+    function test_fheRotl_then_fheRotr_roundTrip_uint8() public {
+        // rotl by k then rotr by k returns the original value.
+        bytes32 lhs = _trivialEncrypt(0xB3, FheType.Uint8);
+        bytes32 rotated = executor.fheRotl(lhs, bytes32(uint256(3)), bytes1(0x01));
+        bytes32 back = executor.fheRotr(rotated, bytes32(uint256(3)), bytes1(0x01));
+        assertEq(_readPlaintext(back), 0xB3);
+    }
+
+    function test_fheRotl_then_fheRotr_roundTrip_uint64() public {
+        bytes32 lhs = _trivialEncrypt(0x0123456789ABCDEF, FheType.Uint64);
+        bytes32 rotated = executor.fheRotl(lhs, bytes32(uint256(19)), bytes1(0x01));
+        bytes32 back = executor.fheRotr(rotated, bytes32(uint256(19)), bytes1(0x01));
+        assertEq(_readPlaintext(back), 0x0123456789ABCDEF);
+    }
+
+    // ──────────────────────────────────────────────
     //  Fuzz tests
     // ──────────────────────────────────────────────
 

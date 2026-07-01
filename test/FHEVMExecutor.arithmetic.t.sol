@@ -188,6 +188,84 @@ contract FHEVMExecutorArithmeticTest is ExecutorDeployer {
     }
 
     // ──────────────────────────────────────────────
+    //  fheDiv / fheRem — tfhe-rs semantics edge cases
+    //
+    //  IMPORTANT: FHEVM only supports div/rem with a *plaintext scalar* divisor. The host
+    //  FHEVMExecutor rejects encrypted divisors (`IsNotScalar`) and reverts with `DivisionByZero`
+    //  for a zero scalar *before* any FHE computation. Raw tfhe-rs makes division "total"
+    //  (unsigned `x / 0 == 2^bitWidth - 1`, `x % 0 == x`), but that path is unreachable through
+    //  FHEVM, so the faithful mock behaviour is to REVERT — see the by-zero tests below.
+    // ──────────────────────────────────────────────
+
+    function test_fheDiv_byOne_identity() public {
+        bytes32 lhs = _trivialEncrypt(200, FheType.Uint8);
+        bytes32 result = executor.fheDiv(lhs, bytes32(uint256(1)), bytes1(0x01));
+        assertEq(_readPlaintext(result), 200);
+    }
+
+    function test_fheDiv_maxByMax_uint8() public {
+        bytes32 lhs = _trivialEncrypt(255, FheType.Uint8);
+        bytes32 result = executor.fheDiv(lhs, bytes32(uint256(255)), bytes1(0x01));
+        assertEq(_readPlaintext(result), 1);
+    }
+
+    function test_fheDiv_truncatesTowardZero_uint8() public {
+        // 7 / 2 == 3 (integer division truncates toward zero).
+        bytes32 lhs = _trivialEncrypt(7, FheType.Uint8);
+        bytes32 result = executor.fheDiv(lhs, bytes32(uint256(2)), bytes1(0x01));
+        assertEq(_readPlaintext(result), 3);
+    }
+
+    function test_fheDiv_scalar_uint64() public {
+        bytes32 lhs = _trivialEncrypt(1_000_000_000_000, FheType.Uint64);
+        bytes32 result = executor.fheDiv(lhs, bytes32(uint256(7)), bytes1(0x01));
+        assertEq(_readPlaintext(result), uint256(1_000_000_000_000) / 7);
+    }
+
+    function test_fheDiv_maxByMax_uint64() public {
+        bytes32 lhs = _trivialEncrypt(type(uint64).max, FheType.Uint64);
+        bytes32 result = executor.fheDiv(lhs, bytes32(uint256(type(uint64).max)), bytes1(0x01));
+        assertEq(_readPlaintext(result), 1);
+    }
+
+    function test_fheDiv_revert_divisionByZero_uint64() public {
+        // tfhe-rs would return type max here, but FHEVM reverts on a zero scalar divisor.
+        bytes32 lhs = _trivialEncrypt(12345, FheType.Uint64);
+        vm.expectRevert(FHEVMExecutor.DivisionByZero.selector);
+        executor.fheDiv(lhs, bytes32(uint256(0)), bytes1(0x01));
+    }
+
+    function test_fheRem_byOne_isZero() public {
+        bytes32 lhs = _trivialEncrypt(200, FheType.Uint8);
+        bytes32 result = executor.fheRem(lhs, bytes32(uint256(1)), bytes1(0x01));
+        assertEq(_readPlaintext(result), 0);
+    }
+
+    function test_fheRem_scalar_uint64() public {
+        bytes32 lhs = _trivialEncrypt(1_000_000_000_007, FheType.Uint64);
+        bytes32 result = executor.fheRem(lhs, bytes32(uint256(1_000_000)), bytes1(0x01));
+        assertEq(_readPlaintext(result), uint256(1_000_000_000_007) % 1_000_000);
+    }
+
+    function test_fheRem_revert_divisionByZero_uint64() public {
+        // tfhe-rs would return the numerator here, but FHEVM reverts on a zero scalar divisor.
+        bytes32 lhs = _trivialEncrypt(12345, FheType.Uint64);
+        vm.expectRevert(FHEVMExecutor.DivisionByZero.selector);
+        executor.fheRem(lhs, bytes32(uint256(0)), bytes1(0x01));
+    }
+
+    /// @dev Euclidean identity: for b != 0, a == (a / b) * b + (a % b).
+    function test_fheDivRem_consistency_uint64() public {
+        uint256 a = 1_234_567_890_123;
+        uint256 b = 98_765;
+        bytes32 lhsDiv = _trivialEncrypt(a, FheType.Uint64);
+        bytes32 lhsRem = _trivialEncrypt(a, FheType.Uint64);
+        uint256 q = _readPlaintext(executor.fheDiv(lhsDiv, bytes32(b), bytes1(0x01)));
+        uint256 r = _readPlaintext(executor.fheRem(lhsRem, bytes32(b), bytes1(0x01)));
+        assertEq(q * b + r, a);
+    }
+
+    // ──────────────────────────────────────────────
     //  Fuzz tests
     // ──────────────────────────────────────────────
 
