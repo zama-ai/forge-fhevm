@@ -109,12 +109,29 @@ contract FHEVMExecutorBitwiseTest is ExecutorDeployer {
         assertEq(_readPlaintext(result), 16);
     }
 
-    function test_fheShl_bounded_shift() public {
-        // Shift amount bounded to bitWidth: shift 10 on uint8 → shift 10%8 = 2
+    function test_fheShl_overshift_returnsZero() public {
         bytes32 lhs = _trivialEncrypt(1, FheType.Uint8);
         bytes32 result = executor.fheShl(lhs, bytes32(uint256(10)), bytes1(0x01));
-        // 1 << 2 = 4
-        assertEq(_readPlaintext(result), 4);
+        assertEq(_readPlaintext(result), 0);
+    }
+
+    function test_fheShl_overshift_exactBitWidth_returnsZero() public {
+        bytes32 lhs = _trivialEncrypt(1, FheType.Uint8);
+        bytes32 result = executor.fheShl(lhs, bytes32(uint256(8)), bytes1(0x01));
+        assertEq(_readPlaintext(result), 0);
+    }
+
+    function test_fheShl_overshift_encryptedRhs_returnsZero() public {
+        bytes32 lhs = _trivialEncrypt(1, FheType.Uint8);
+        bytes32 rhs = _trivialEncrypt(10, FheType.Uint8);
+        bytes32 result = executor.fheShl(lhs, rhs, bytes1(0x00));
+        assertEq(_readPlaintext(result), 0);
+    }
+
+    function test_fheShl_maxInBoundShift() public {
+        bytes32 lhs = _trivialEncrypt(1, FheType.Uint8);
+        bytes32 result = executor.fheShl(lhs, bytes32(uint256(7)), bytes1(0x01));
+        assertEq(_readPlaintext(result), 128);
     }
 
     function test_fheShl_shift_zero() public {
@@ -139,11 +156,29 @@ contract FHEVMExecutorBitwiseTest is ExecutorDeployer {
         assertEq(_readPlaintext(result), 8);
     }
 
-    function test_fheShr_bounded_shift() public {
+    function test_fheShr_overshift_returnsZero() public {
         bytes32 lhs = _trivialEncrypt(255, FheType.Uint8);
-        // shift 9 on uint8 → shift 9%8 = 1
         bytes32 result = executor.fheShr(lhs, bytes32(uint256(9)), bytes1(0x01));
-        assertEq(_readPlaintext(result), 127);
+        assertEq(_readPlaintext(result), 0);
+    }
+
+    function test_fheShr_overshift_exactBitWidth_returnsZero() public {
+        bytes32 lhs = _trivialEncrypt(255, FheType.Uint8);
+        bytes32 result = executor.fheShr(lhs, bytes32(uint256(8)), bytes1(0x01));
+        assertEq(_readPlaintext(result), 0);
+    }
+
+    function test_fheShr_overshift_encryptedRhs_returnsZero() public {
+        bytes32 lhs = _trivialEncrypt(255, FheType.Uint8);
+        bytes32 rhs = _trivialEncrypt(9, FheType.Uint8);
+        bytes32 result = executor.fheShr(lhs, rhs, bytes1(0x00));
+        assertEq(_readPlaintext(result), 0);
+    }
+
+    function test_fheShr_maxInBoundShift() public {
+        bytes32 lhs = _trivialEncrypt(255, FheType.Uint8);
+        bytes32 result = executor.fheShr(lhs, bytes32(uint256(7)), bytes1(0x01));
+        assertEq(_readPlaintext(result), 1);
     }
 
     function test_fheShr_truncated_input() public {

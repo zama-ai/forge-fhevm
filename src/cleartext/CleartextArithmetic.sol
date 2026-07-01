@@ -85,11 +85,17 @@ library CleartextArithmetic {
     }
 
     function shl(uint256 a, uint256 b, uint256 bitWidth) internal pure returns (uint256) {
-        return clamp(a << (b % bitWidth), bitWidth);
+        if (b >= bitWidth) {
+            return 0;
+        }
+        return clamp(a << b, bitWidth);
     }
 
     function shr(uint256 a, uint256 b, uint256 bitWidth) internal pure returns (uint256) {
-        return clamp(a >> (b % bitWidth), bitWidth);
+        if (b >= bitWidth) {
+            return 0;
+        }
+        return clamp(a >> b, bitWidth);
     }
 
     function rotl(uint256 a, uint256 b, uint256 bitWidth) internal pure returns (uint256) {
