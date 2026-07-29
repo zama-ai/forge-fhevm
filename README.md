@@ -85,9 +85,45 @@ Full guides and API reference are available in the [docs](./docs/) directory (Vi
 - [Testing Patterns](./docs/guides/testing-patterns.md)
 - [FhevmTest API Reference](./docs/api/fhevm-test.md)
 
+## Dependencies you need as a consumer
+
+Inheriting `FhevmTest` requires exactly three remappings:
+
+```
+forge-fhevm/=dependencies/forge-fhevm/src/
+forge-std/=dependencies/forge-std-1.14.0/src/
+encrypted-types/=dependencies/@encrypted-types-0.0.4/
+```
+
+**No OpenZeppelin version is imposed on you.** Foundry remappings are project-global, so anything `FhevmTest` imports becomes a hard constraint on your whole repo. The host contracts do use OpenZeppelin, but they reach your build as compiled bytecode rather than source, so you are free to pin whatever version you like. `fixtures/consumer/` is a downstream project that pins a deliberately newer OpenZeppelin and runs in CI to keep this true.
+
 ## Vendored host contracts
 
-The fhEVM host contracts are vendored in `src/fhevm-host/` because the upstream `fhevm` package generates `FHEVMHostAddresses.sol` at compile time, making it impossible to build as a regular dependency. Run `make update-host-contracts` (or `make update-host-contracts FHEVM_VERSION=v0.12.0`) to pull a new version.
+The fhEVM host contracts are vendored in `src/fhevm-host/` because the upstream `fhevm` package generates `FHEVMHostAddresses.sol` at compile time, making it impossible to build as a regular dependency. Run `make update-host-contracts` (or `make update-host-contracts FHEVM_VERSION=v0.12.0`) to pull a new version — this also regenerates `src/generated/`.
+
+The vendored source is used to *build* the host contracts, our own test suite, and the deployment scripts. It is deliberately kept out of consumer builds, which instead see `src/generated/`:
+
+| Path                             | Contents                                                              |
+| -------------------------------- | --------------------------------------------------------------------- |
+| `src/generated/HostBytecode.sol` | Creation/runtime bytecode blobs for each host contract                |
+| `src/generated/interfaces/`      | ABI-derived interfaces (errors and events included)                   |
+
+Both are produced by `make generate` and must never be hand-edited.
+
+`FhevmTest` deploys implementations with `CREATE` rather than `vm.etch`, because every UUPS host contract bakes `UUPSUpgradeable.__self = address(this)` into its runtime code and `_checkProxy` rejects an upgrade unless that immutable matches the ERC-1967 slot. Only `PauserSet` and the ERC-1967 proxy — neither of which has immutables — are etched at their canonical addresses.
+
+### Checks
+
+| Command                       | What it enforces                                                                 |
+| ----------------------------- | -------------------------------------------------------------------------------- |
+| `make check-generated`        | `src/generated/` matches what the vendored source compiles to                    |
+| `make check-consumer-graph`   | `FhevmTest` reaches nothing outside `forge-std` and `encrypted-types`            |
+| `make check-consumer-fixture` | A downstream project on a newer OpenZeppelin still builds and passes             |
+| `make check`                  | All of the above, plus the full test suite                                       |
+
+`check-generated` is what makes the ~180 KB of committed hex trustworthy: nobody reviews the blobs by eye, so CI regenerates them and requires a clean diff.
+
+Compiler settings for generation currently come from this repo's default profile, so the blobs match what the test suite compiled before the change but are not guaranteed byte-identical to the implementations deployed on mainnet. Verifying against on-chain code is a known follow-up.
 
 ## Deploying a cleartext FHEVM stack
 

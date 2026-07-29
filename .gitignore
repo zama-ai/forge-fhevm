@@ -8,3 +8,7 @@ dist/
 out/
 dependencies/
 cache/
+
+# Python bytecode from the generator scripts
+__pycache__/
+*.pyc
