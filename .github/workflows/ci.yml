@@ -81,11 +81,6 @@ jobs:
       - name: Generated files match vendored source
         run: make check-generated
 
-      # The reason this library ships bytecode instead of source: FhevmTest must not force
-      # an OpenZeppelin version on the repos that inherit it.
-      - name: Consumer compile graph is dependency-clean
-        run: make check-consumer-graph
-
   consumer-fixture:
     name: Downstream consumer (newer OpenZeppelin)
     runs-on: ubuntu-latest

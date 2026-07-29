@@ -30,10 +30,9 @@ BANNER = """// SPDX-License-Identifier: BSD-3-Clause-Clear
 pragma solidity ^0.8.27;
 """
 
-# Implementations are deployed with CREATE so their constructors run: every UUPS
-# contract bakes `UUPSUpgradeable.__self = address(this)` into its runtime code,
-# and `_checkProxy` reverts unless that immutable matches the ERC1967 slot.
-# Etching a static runtime blob would leave __self as a zero placeholder.
+# Deployed with CREATE so constructors run: every UUPS contract bakes
+# `UUPSUpgradeable.__self = address(this)` into its runtime code, and `_checkProxy`
+# reverts unless that immutable matches the ERC1967 slot.
 CREATION = [
     ("ACL", "ACL.sol"),
     ("HCULimit", "HCULimit.sol"),
@@ -124,9 +123,8 @@ def gen_interfaces() -> None:
         for line in res.stdout.splitlines():
             if line.startswith("// SPDX-License-Identifier") or line.startswith("pragma solidity"):
                 continue  # cast emits its own SPDX + a loose pragma; replace with ours
-            # `cast interface` flattens enum parameters into a local `type X is uint8`, which
-            # is a *distinct* type from the shared enum callers pass. Re-point at the real one:
-            # FheType lives in a vendored file that imports nothing, so it stays OZ-free.
+            # `cast interface` flattens enum parameters into a local `type X is uint8`, a
+            # *distinct* type from the shared enum callers pass — re-point at the real one.
             if line.strip() == "type FheType is uint8;":
                 imports.append('import {FheType} from "../../fhevm-host/contracts/shared/FheType.sol";')
                 continue

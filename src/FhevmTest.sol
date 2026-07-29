@@ -513,11 +513,8 @@ abstract contract FhevmTest is PlaintextDBMixin {
         _kmsVerifier = IKMSVerifier(kmsVerifierAdd);
     }
 
-    /// @dev Deploys an embedded creation-code blob with `CREATE` so the constructor runs.
-    /// @dev Constructing rather than etching runtime code is mandatory here: every UUPS host
-    /// contract bakes `UUPSUpgradeable.__self = address(this)` into its runtime bytecode, and
-    /// `_checkProxy` reverts on `upgradeToAndCall` unless that immutable equals the address in
-    /// the ERC-1967 slot. A statically etched blob would carry a zero placeholder instead.
+    /// @dev Deploys an embedded creation-code blob with `CREATE` so the constructor runs. Etching
+    /// runtime code instead would leave the UUPS `__self` immutable zeroed and break upgrades.
     function _deployBlob(bytes memory creationCode) private returns (address addr) {
         assembly {
             addr := create(0, add(creationCode, 0x20), mload(creationCode))
@@ -526,11 +523,9 @@ abstract contract FhevmTest is PlaintextDBMixin {
     }
 
     /// @dev Installs an ERC-1967 proxy at the canonical address `target`, pointing at `impl`.
-    /// @dev `vm.etch` cannot run a constructor, so this writes the implementation slot by hand —
-    /// the only state the `ERC1967Proxy` constructor would have set. The proxy itself carries no
-    /// immutables, so its runtime blob is address-independent. Callers must then invoke the empty
-    /// proxy's `initialize` to bring the initialized version to 1, which every host contract's
-    /// `onlyFromEmptyProxy` modifier requires before `initializeFromEmptyProxy` will run.
+    /// `vm.etch` cannot run a constructor, so the implementation slot is written by hand — the only
+    /// state `ERC1967Proxy`'s constructor sets. Callers must still call the empty proxy's
+    /// `initialize`, which `onlyFromEmptyProxy` requires before `initializeFromEmptyProxy` runs.
     function _installProxy(address target, address impl) private {
         vm.etch(target, DEPLOYABLE_ERC1967_PROXY_RUNTIME_CODE);
         vm.store(target, _ERC1967_IMPL_SLOT, bytes32(uint256(uint160(impl))));

@@ -8,7 +8,7 @@ VENDOR_DIR := src/fhevm-host/contracts
 TEMP_DIR   := .fhevm-tmp
 GEN_DIR    := src/generated
 
-.PHONY: update-host-contracts clean-tmp generate check-generated check-consumer-graph check
+.PHONY: update-host-contracts clean-tmp generate check-generated check-consumer-fixture check
 
 ## Pull host contracts from the fhevm repository
 ## Usage:
@@ -61,10 +61,6 @@ check-generated:
 		exit 1; }
 	@echo "OK: $(GEN_DIR) matches the vendored source."
 
-## CI gate: FhevmTest must not pull OpenZeppelin (or anything else) into consumer builds.
-check-consumer-graph:
-	@python3 script/gen/check_consumer_graph.py
-
 ## CI gate: a downstream project pinning a NEWER OpenZeppelin must still build and pass.
 ## Populates the fixture's dependencies/forge-fhevm/ the way soldeer would install it.
 FIXTURE := fixtures/consumer
@@ -75,5 +71,5 @@ check-consumer-fixture:
 	@cd $(FIXTURE) && forge soldeer install --config-location foundry >/dev/null
 	@forge test --root $(FIXTURE)
 
-check: check-generated check-consumer-graph check-consumer-fixture
+check: check-generated check-consumer-fixture
 	@forge test

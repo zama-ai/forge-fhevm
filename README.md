@@ -1,12 +1,12 @@
 # forge-fhevm
 
-Foundry-native testing library for [fhEVM](https://github.com/zama-ai/fhevm) confidential smart contracts. Write Forge tests that encrypt, compute, decrypt, and assert -- using real production host contracts, no mocks.
+Foundry-native testing library for [fhEVM](https://github.com/zama-ai/fhevm) confidential smart contracts. Write Forge tests that encrypt, compute, decrypt, and assert using host contracts built from vendored upstream source.
 
 ## How it works
 
-forge-fhevm deploys the actual fhEVM host contracts (FHEVMExecutor, ACL, InputVerifier, KMSVerifier) as UUPS upgradeable proxies inside Foundry's test environment. When the executor processes an FHE operation, it emits an event. forge-fhevm intercepts these events via `vm.getRecordedLogs()` and maintains a local plaintext database that maps encrypted handles to their cleartext values. This lets tests exercise the exact same contract code paths as production while computing results in the clear.
+forge-fhevm compiles vendored fhEVM host-contract source (FHEVMExecutor, ACL, InputVerifier, KMSVerifier) and deploys the resulting contracts as UUPS upgradeable proxies inside Foundry's test environment. When the executor processes an FHE operation, it emits an event. forge-fhevm intercepts these events via `vm.getRecordedLogs()` and maintains a local plaintext database that maps encrypted handles to their cleartext values. This lets tests exercise the host-contract behavior locally while computing results in the clear.
 
-The only deviation from mainnet is the use of mock private keys for the input signer and KMS signer, enabling deterministic EIP-712 proof generation in tests.
+The test environment uses mock private keys for the input signer and KMS signer, enabling deterministic EIP-712 proof generation. The vendored source and local compiler settings are not a byte-for-byte guarantee of the implementations deployed on a live network.
 
 > [!TIP]
 > `vm.getRecordedLogs()` consumes recorded logs, which does not allow for FHE log processing when called directly in event inspection tests. Always use the `getRecordedLogs()` helper function to ensure logs are properly returned and fhEVM effects are correctly applied.
@@ -97,6 +97,13 @@ encrypted-types/=dependencies/@encrypted-types-0.0.4/
 
 **No OpenZeppelin version is imposed on you.** Foundry remappings are project-global, so anything `FhevmTest` imports becomes a hard constraint on your whole repo. The host contracts do use OpenZeppelin, but they reach your build as compiled bytecode rather than source, so you are free to pin whatever version you like. `fixtures/consumer/` is a downstream project that pins a deliberately newer OpenZeppelin and runs in CI to keep this true.
 
+### Migration notes
+
+This change removes OpenZeppelin types from the consumer-facing compile graph, which requires two source-level updates:
+
+- `dealConfidential` now takes an `address` wrapper. Existing calls should use `dealConfidential(address(wrapper), user, amount)`.
+- `_executor`, `_acl`, `_inputVerifier`, and `_kmsVerifier` now use the generated `IFHEVMExecutor`, `IACL`, `IInputVerifier`, and `IKMSVerifier` types. Normal method calls remain available, but code assigning these fields to concrete host-contract types must use the corresponding interface or cast through `address`.
+
 ## Vendored host contracts
 
 The fhEVM host contracts are vendored in `src/fhevm-host/` because the upstream `fhevm` package generates `FHEVMHostAddresses.sol` at compile time, making it impossible to build as a regular dependency. Run `make update-host-contracts` (or `make update-host-contracts FHEVM_VERSION=v0.12.0`) to pull a new version — this also regenerates `src/generated/`.
@@ -117,7 +124,6 @@ Both are produced by `make generate` and must never be hand-edited.
 | Command                       | What it enforces                                                                 |
 | ----------------------------- | -------------------------------------------------------------------------------- |
 | `make check-generated`        | `src/generated/` matches what the vendored source compiles to                    |
-| `make check-consumer-graph`   | `FhevmTest` reaches nothing outside `forge-std` and `encrypted-types`            |
 | `make check-consumer-fixture` | A downstream project on a newer OpenZeppelin still builds and passes             |
 | `make check`                  | All of the above, plus the full test suite                                       |
 

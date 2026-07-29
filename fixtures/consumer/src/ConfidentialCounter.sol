@@ -5,14 +5,8 @@ import {FHE, euint64, externalEuint64} from "@fhevm/solidity/lib/FHE.sol";
 import {ZamaEthereumConfig} from "@fhevm/solidity/config/ZamaConfig.sol";
 import {Ownable2StepUpgradeable} from "@openzeppelin/contracts-upgradeable/access/Ownable2StepUpgradeable.sol";
 
-/**
- * @dev A consumer contract that uses BOTH fhEVM and OpenZeppelin upgradeable.
- *
- * The `Ownable2StepUpgradeable` inheritance is the load-bearing part of this fixture: it
- * resolves to OZ 5.4, while forge-fhevm's vendored host contracts are built against an older
- * pin. If FhevmTest ever re-imports host contract *source*, the two versions collide in one
- * project-global remapping and this file stops compiling.
- */
+/// @dev The `Ownable2StepUpgradeable` inheritance is the load-bearing part of this fixture: it
+/// resolves to OZ 5.4, so a host contract source import in the test base would collide here.
 contract ConfidentialCounter is ZamaEthereumConfig, Ownable2StepUpgradeable {
     euint64 private _count;
 

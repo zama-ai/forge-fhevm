@@ -1,7 +1,7 @@
 # Handoff — decoupling forge-fhevm consumers from our OpenZeppelin pin
 
-**Status:** implemented, all gates green, **nothing committed**.
-**Branch:** `main` (uncommitted working tree — branch before committing).
+**Status:** implemented on the feature branch; follow-up review edits are uncommitted.
+**Branch:** `feat/host-bytecode-generation`.
 
 ---
 
@@ -31,15 +31,14 @@ Aryeh offered to write the PR — this is a complete implementation he can revie
 | `src/generated/interfaces/I*.sol` | 7 ABI-derived interfaces (errors + events included) |
 | `src/interfaces/IConfidentialWrapper.sol` | Hand-written minimal `IERC20Minimal` / `IConfidentialERC20Wrapper` |
 | `script/gen/generate.py` | The generator |
-| `script/gen/check_consumer_graph.py` | Import-graph gate |
 | `fixtures/consumer/` | Downstream project pinned to **OZ 5.4**, builds + tests in CI |
-| `.gitattributes` | Marks `src/generated/**` `linguist-generated -diff` |
+| `.gitattributes` | Hides the bytecode diff while keeping generated interface diffs reviewable |
 
 ### Modified
 
 - `src/FhevmTest.sol` — the substantive rewrite (fields, deploy path, `dealConfidential`)
 - `src/PlaintextDBMixin.sol`, `src/InputProofHelper.sol` — `@fhevm/host-contracts/` → relative imports
-- `Makefile` — `generate`, `check-generated`, `check-consumer-graph`, `check-consumer-fixture`, `check`
+- `Makefile` — `generate`, `check-generated`, `check-consumer-fixture`, `check`
 - `.github/workflows/ci.yml` — two new jobs
 - `README.md` — consumer dependency contract, vendoring rationale, checks table
 
@@ -116,7 +115,12 @@ breaking anyway (Solidity has no implicit contract→interface conversion across
 `address` was the honest choice.
 
 Callers write `dealConfidential(address(wrapper), user, amount)`. Not mentioned anywhere in `docs/`, so
-the blast radius is small — **but it needs release notes.**
+the blast radius is small. The migration is now documented in the README.
+
+The protected host fields also changed from concrete contract types to generated interfaces:
+`FHEVMExecutor` → `IFHEVMExecutor`, `ACL` → `IACL`, `InputVerifier` → `IInputVerifier`, and
+`KMSVerifier` → `IKMSVerifier`. Normal method calls remain available, but callers assigning these
+fields to concrete variables must update the type or cast through `address`.
 
 ### 4.2 `FheType` post-processing in the generator — string matching
 
@@ -127,8 +131,9 @@ real (OZ-free) `shared/FheType.sol`.
 The match is on the literal string `type FheType is uint8;`. **If `cast`'s output format changes, this
 silently stops firing and the build breaks with confusing conversion errors** (that's how it first
 surfaced). It's guarded by `check-generated` + the test suite, so it fails loudly in CI, but the
-diagnosis isn't obvious. A more robust version would parse the ABI JSON directly instead of
-post-processing `cast` output.
+diagnosis isn't obvious. Parsing the ABI JSON directly was considered during review, but replacing
+this small pinned-tool workaround with a larger custom generator is not justified unless it becomes
+an actual maintenance problem.
 
 ### 4.3 Generation uses the default compiler profile
 
@@ -136,9 +141,9 @@ Blobs are byte-identical to what the test suite compiled *before* this change �
 pass untouched — but **not necessarily identical to what's deployed on mainnet**. We do not currently
 match upstream's solc version / optimizer runs / metadata settings.
 
-The README's "real production host contracts, no mocks" claim therefore rests on the vendoring being
-faithful, exactly as it did before. No worse, but this change does **not** improve mainnet fidelity.
-See §6.1.
+Public wording now states the precise guarantee: the contracts are built from vendored upstream
+source, but local compiler settings do not prove byte-identical fidelity with a live deployment.
+See §6.1 for the optional stronger check.
 
 ### 4.4 The fixture copies `src/` rather than doing a real install
 
@@ -149,12 +154,12 @@ packaging manifest problem.
 
 The fixture also `cd`s in the Makefile recipe because `forge soldeer install` has no `--root`.
 
-### 4.5 The fixture is a smoke test, not the real gate
+### 4.5 The fixture is an integration check, not an exact compile-graph assertion
 
-If `FhevmTest` re-imported host source, the fixture *might* still compile — OZ 5.4 vs 5.1 isn't
-guaranteed to conflict. **`check-consumer-graph` is the actual gate**; it's exact and cheap. The fixture
-covers packaging, which the static walk can't. Keep both; don't drop the graph check on the grounds
-that "the fixture passes".
+If `FhevmTest` re-imported host source, the fixture *might* still compile because OZ 5.4 versus 5.1
+isn't guaranteed to conflict. A custom import-graph checker was considered and removed during review:
+maintaining a Solidity import parser was disproportionate to the current need. The fixture keeps the
+original downstream scenario covered without claiming to prove the exact set of reachable packages.
 
 ### 4.6 `make generate` skips `FhevmTest` and `test/**`
 
@@ -171,18 +176,16 @@ Verified: `rm -rf src/generated && forge clean && make generate` reproduces byte
 
 - **Regenerate after *any* change under `src/fhevm-host/`.** `make update-host-contracts` now does it
   automatically; a manual edit does not. `make check-generated` catches it in CI.
-- **Adding an import to `FhevmTest.sol` can silently re-pin a dependency on every consumer.**
-  `make check-consumer-graph` fails with the exact offending chain. Don't add to the `ALLOWED` set in
-  `check_consumer_graph.py` without understanding that you're adding a hard constraint downstream.
+- **Adding an import to `FhevmTest.sol` can re-pin a dependency on every consumer.** Treat its import
+  surface as part of the consumer interface and exercise dependency changes through the fixture.
 - **Determinism** depends on the pinned `solc = "0.8.27"` plus `cbor_metadata = false` /
   `bytecode_hash = "none"`. If someone changes those, blobs churn and `check-generated` fails on
   unrelated PRs.
 - **`reinitializer(REINITIALIZER_VERSION)`** — if upstream bumps a host contract's reinitializer
   version, the two-phase init sequence may need revisiting. Currently every
   `initializeFromEmptyProxy` requires initialized version exactly 1.
-- **`src/generated/` diffs are suppressed** via `.gitattributes`. That's intentional but means a
-  malicious or accidental blob edit is invisible in review — `check-generated` is the *only* thing
-  standing between the repo and unreviewable bytecode. Do not disable that job.
+- **The `HostBytecode.sol` diff is suppressed** via `.gitattributes`. Generated interface diffs stay
+  visible. `check-generated` is what verifies the unreviewable bytecode; do not disable that job.
 
 ---
 
@@ -198,31 +201,27 @@ what's actually deployed — everything we have today only proves internal consi
 source.
 
 Needs a `[profile.hostgen]` reproducing upstream's compiler settings (solc version, optimizer runs,
-metadata). Start advisory / metadata-stripped; promote to blocking only if it goes reliably green.
-It may not be achievable — worth timeboxing.
+metadata). A comparison must also normalize the UUPS `__self` immutable reference, which legitimately
+contains a different implementation address in local and live deployments. Start advisory; promote to
+blocking only if it goes reliably green. It may not be achievable — worth timeboxing.
 
-### 6.2 Parse ABI JSON instead of post-processing `cast interface`
-
-Removes the fragile string match in §4.2 and the `cast` binary dependency, and would let us emit
-shared enum types properly rather than patching them back in.
-
-### 6.3 No source-vs-blob parity test
+### 6.2 No source-vs-blob parity test
 
 The original source-deployment path was **replaced**, not kept alongside. We can't currently A/B the
 two. The 391 passing tests are strong evidence the blob path is equivalent, but if you want a
 standing guarantee, parameterize `_deployAllContracts` on mode and run the suite twice.
 
-### 6.4 Split `HostBytecode.sol`
+### 6.3 Split `HostBytecode.sol`
 
 One 180 KB file. Per-contract files would make `git` and editors happier and allow regenerating only
 what changed. Cosmetic.
 
-### 6.5 Interfaces not exposed for everything
+### 6.4 Interfaces not exposed for everything
 
 `IPauserSet` (vendored, OZ-free) and `IHCULimit` exist but aren't surfaced as public fields on
 `FhevmTest`. If consumers ask for `_hcuLimit` / `_pauserSet`, the interfaces are already generated.
 
-### 6.6 Upstream sync stays manual — by design
+### 6.5 Upstream sync stays manual — by design
 
 We explicitly decided **not** to auto-sync from `zama-ai/fhevm` releases: what's on GitHub is not
 necessarily what runs on the live network, so a human always submits the contract update PR.
@@ -235,7 +234,6 @@ necessarily what runs on the live network, so a human always submits the contrac
 ```bash
 make check                      # everything below, plus the full suite
 make check-generated            # src/generated/ matches the vendored source
-make check-consumer-graph       # FhevmTest reaches only forge-std + encrypted-types
 make check-consumer-fixture     # downstream project on OZ 5.4 builds and passes
 make generate                   # regenerate after touching src/fhevm-host/
 ```
@@ -245,17 +243,14 @@ Confirmed green:
 - 2/2 consumer-fixture tests, against **OZ 5.4** while this repo builds on **5.1.0**
 - `forge fmt --check`
 - byte-identical regeneration after `forge clean`
-- the graph gate fails correctly when pointed at an OZ-importing file (negative-tested against
-  `src/HCULimitNoDepthCap.sol`)
 
 ---
 
 ## 8. Open questions for the team
 
-1. **Release notes / versioning** for the `dealConfidential` break — who owns that, and does
-   forge-fhevm have a changelog convention?
+1. **Release versioning** for the documented source-level breaks — forge-fhevm has no changelog
+   convention in the repository today.
 2. **Is mainnet-bytecode fidelity (§6.1) in scope**, or is source-faithful vendoring the standing
-   contract? This determines whether the README's "real production host contracts" wording should be
-   softened further.
+   contract? Public wording has been softened so this no longer blocks the current change.
 3. **Hand to Aryeh for review, or ship from devX?** He offered to write it; this is a finished
    implementation, so the useful thing is probably his review as the consumer who hit the problem.
