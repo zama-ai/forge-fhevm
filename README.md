@@ -1,12 +1,12 @@
 # forge-fhevm
 
-Foundry-native testing library for [fhEVM](https://github.com/zama-ai/fhevm) confidential smart contracts. Write Forge tests that encrypt, compute, decrypt, and assert using host contracts built from vendored upstream source.
+Foundry-native testing library for [fhEVM](https://github.com/zama-ai/fhevm) confidential smart contracts. Write Forge tests that encrypt, compute, decrypt, and assert against the actual fhEVM host contracts.
 
 ## How it works
 
-forge-fhevm compiles vendored fhEVM host-contract source (FHEVMExecutor, ACL, InputVerifier, KMSVerifier) and deploys the resulting contracts as UUPS upgradeable proxies inside Foundry's test environment. When the executor processes an FHE operation, it emits an event. forge-fhevm intercepts these events via `vm.getRecordedLogs()` and maintains a local plaintext database that maps encrypted handles to their cleartext values. This lets tests exercise the host-contract behavior locally while computing results in the clear.
+forge-fhevm deploys the fhEVM host contracts (FHEVMExecutor, ACL, InputVerifier, KMSVerifier) as UUPS upgradeable proxies inside Foundry's test environment. When the executor processes an FHE operation, it emits an event. forge-fhevm intercepts these events via `vm.getRecordedLogs()` and maintains a local plaintext database that maps encrypted handles to their cleartext values. This lets tests exercise the same contract code paths as production while computing results in the clear.
 
-The test environment uses mock private keys for the input signer and KMS signer, enabling deterministic EIP-712 proof generation. The vendored source and local compiler settings are not a byte-for-byte guarantee of the implementations deployed on a live network.
+The test environment uses mock private keys for the input signer and KMS signer, enabling deterministic EIP-712 proof generation.
 
 > [!TIP]
 > `vm.getRecordedLogs()` consumes recorded logs, which does not allow for FHE log processing when called directly in event inspection tests. Always use the `getRecordedLogs()` helper function to ensure logs are properly returned and fhEVM effects are correctly applied.
@@ -95,41 +95,47 @@ forge-std/=dependencies/forge-std-1.14.0/src/
 encrypted-types/=dependencies/@encrypted-types-0.0.4/
 ```
 
-**No OpenZeppelin version is imposed on you.** Foundry remappings are project-global, so anything `FhevmTest` imports becomes a hard constraint on your whole repo. The host contracts do use OpenZeppelin, but they reach your build as compiled bytecode rather than source, so you are free to pin whatever version you like. `fixtures/consumer/` is a downstream project that pins a deliberately newer OpenZeppelin and runs in CI to keep this true.
+That's the whole list — in particular, no OpenZeppelin version is imposed on you. Pin whatever version your project needs.
 
 ### Migration notes
 
-This change removes OpenZeppelin types from the consumer-facing compile graph, which requires two source-level updates:
+Upgrading from a version that imported host-contract source requires two source-level updates:
 
 - `dealConfidential` now takes an `address` wrapper. Existing calls should use `dealConfidential(address(wrapper), user, amount)`.
 - `_executor`, `_acl`, `_inputVerifier`, and `_kmsVerifier` now use the generated `IFHEVMExecutor`, `IACL`, `IInputVerifier`, and `IKMSVerifier` types. Normal method calls remain available, but code assigning these fields to concrete host-contract types must use the corresponding interface or cast through `address`.
 
-## Vendored host contracts
+## Maintaining the host contracts
+
+Internals from here on — nothing in this section is needed to write tests.
 
 The fhEVM host contracts are vendored in `src/fhevm-host/` because the upstream `fhevm` package generates `FHEVMHostAddresses.sol` at compile time, making it impossible to build as a regular dependency. Run `make update-host-contracts` (or `make update-host-contracts FHEVM_VERSION=v0.12.0`) to pull a new version — this also regenerates `src/generated/`.
 
-The vendored source is used to *build* the host contracts, our own test suite, and the deployment scripts. It is deliberately kept out of consumer builds, which instead see `src/generated/`:
+That source builds the host contracts, this repository's own test suite, and the deployment scripts. It never reaches consumer builds, which see `src/generated/` instead:
 
-| Path                             | Contents                                                              |
-| -------------------------------- | --------------------------------------------------------------------- |
-| `src/generated/HostBytecode.sol` | Creation/runtime bytecode blobs for each host contract                |
-| `src/generated/interfaces/`      | ABI-derived interfaces (errors and events included)                   |
+| Path                             | Contents                                               |
+| -------------------------------- | ------------------------------------------------------ |
+| `src/generated/HostBytecode.sol` | Creation/runtime bytecode blobs for each host contract |
+| `src/generated/interfaces/`      | ABI-derived interfaces (errors and events included)    |
 
 Both are produced by `make generate` and must never be hand-edited.
 
-`FhevmTest` deploys implementations with `CREATE` rather than `vm.etch`, because every UUPS host contract bakes `UUPSUpgradeable.__self = address(this)` into its runtime code and `_checkProxy` rejects an upgrade unless that immutable matches the ERC-1967 slot. Only `PauserSet` and the ERC-1967 proxy — neither of which has immutables — are etched at their canonical addresses.
+### Why tests install bytecode instead of importing the contracts
+
+Foundry remappings are project-global, so every import `FhevmTest` makes becomes a hard constraint on the whole downstream repo. Because the host contracts import OpenZeppelin, `new ACL()` in the test base would pin this library's OpenZeppelin version on every consumer. Deploying the same contracts from pre-compiled blobs keeps that dependency inside our build.
+
+The blobs are installed two different ways. Implementations go through `CREATE` on their *creation* code, so their constructors run: every UUPS host contract bakes `UUPSUpgradeable.__self = address(this)` into its runtime code, and `_checkProxy` rejects an upgrade unless that immutable matches the ERC-1967 slot — a statically etched blob would carry a zero there. Only `PauserSet` and the ERC-1967 proxy have no immutables, so those are `vm.etch`ed at their canonical addresses.
 
 ### Checks
 
-| Command                       | What it enforces                                                                 |
-| ----------------------------- | -------------------------------------------------------------------------------- |
-| `make check-generated`        | `src/generated/` matches what the vendored source compiles to                    |
-| `make check-consumer-fixture` | A downstream project on a newer OpenZeppelin still builds and passes             |
-| `make check`                  | All of the above, plus the full test suite                                       |
+| Command                       | What it enforces                                                                       |
+| ----------------------------- | -------------------------------------------------------------------------------------- |
+| `make check-generated`        | `src/generated/` matches what the vendored source compiles to                          |
+| `make check-consumer-fixture` | `fixtures/consumer/`, a downstream project on a newer OpenZeppelin, builds and passes   |
+| `make check`                  | All of the above, plus the full test suite                                              |
 
 `check-generated` is what makes the ~180 KB of committed hex trustworthy: nobody reviews the blobs by eye, so CI regenerates them and requires a clean diff.
 
-Compiler settings for generation currently come from this repo's default profile, so the blobs match what the test suite compiled before the change but are not guaranteed byte-identical to the implementations deployed on mainnet. Verifying against on-chain code is a known follow-up.
+Generation uses this repository's default compiler profile, so the blobs are faithful to the vendored source but not guaranteed byte-identical to the implementations deployed on a live network. Verifying against on-chain code is a known follow-up.
 
 ## Deploying a cleartext FHEVM stack
 

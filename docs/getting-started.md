@@ -5,7 +5,7 @@ description: Install forge-fhevm and write your first confidential contract test
 
 # Getting Started
 
-forge-fhevm is a Foundry-native testing library for FHEVM confidential smart contracts. It deploys host contracts built from vendored upstream source (FHEVMExecutor, ACL, InputVerifier, KMSVerifier) with mock signer keys and tracks plaintext values through event interception.
+forge-fhevm is a Foundry-native testing library for FHEVM confidential smart contracts. It deploys the fhEVM host contracts (FHEVMExecutor, ACL, InputVerifier, KMSVerifier) with mock signer keys and tracks plaintext values through event interception.
 
 ## Installation
 
@@ -79,7 +79,7 @@ When your test inherits `FhevmTest`, the `setUp()` function:
    - **KMSVerifier** — verifies EIP-712 signed decryption proofs (threshold: 1 signer)
 4. Starts the Foundry log recorder (`vm.recordLogs()`) for plaintext tracking
 
-The contracts are compiled from the repository's vendored upstream source. The test stack also uses known private keys for the input and KMS signers and local plaintext tracking. It is intended to reproduce host-contract behavior for tests, not to guarantee byte-identical code with a live network deployment.
+The host contracts are the upstream implementations. The test stack differs from a live network in two ways: the input and KMS signers use known private keys, and plaintext values are tracked locally.
 
 ## Next Steps
 

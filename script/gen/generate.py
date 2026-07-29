@@ -6,11 +6,9 @@ Emits, from the compiled artifacts of the vendored host contracts:
   src/generated/HostBytecode.sol     creation/runtime bytecode blobs
   src/generated/interfaces/I*.sol    ABI-derived interfaces (errors + events included)
 
-Why: the vendored host contracts under src/fhevm-host/ import OpenZeppelin.
-Because Foundry remappings are project-global, any consumer inheriting
-FhevmTest inherits our OZ pin too. Shipping bytecode + interfaces instead of
-source keeps the consumer's compile graph free of OZ, so downstream repos pick
-their own version.
+Consumers get this instead of the vendored source, which imports OpenZeppelin and
+would pin our version on every downstream repo through Foundry's project-global
+remappings.
 
 Run via `make generate` — never edit the output by hand.
 """
