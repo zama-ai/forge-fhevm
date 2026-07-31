@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: BSD-3-Clause-Clear
 pragma solidity ^0.8.24;
 
-import {FheType} from "@fhevm/host-contracts/contracts/shared/FheType.sol";
-import {HANDLE_VERSION} from "@fhevm/host-contracts/contracts/shared/Constants.sol";
+import {FheType} from "./fhevm-host/contracts/shared/FheType.sol";
+import {HANDLE_VERSION} from "./fhevm-host/contracts/shared/Constants.sol";
 
 library InputProofHelper {
     bytes32 internal constant EIP712_DOMAIN_TYPEHASH =

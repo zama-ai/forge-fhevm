@@ -5,7 +5,7 @@ description: Install forge-fhevm and write your first confidential contract test
 
 # Getting Started
 
-forge-fhevm is a Foundry-native testing library for FHEVM confidential smart contracts. It deploys real host contracts (FHEVMExecutor, ACL, InputVerifier, KMSVerifier) with mock signer keys and tracks plaintext values through event interception — giving you full FHE testing without mocks.
+forge-fhevm is a Foundry-native testing library for FHEVM confidential smart contracts. It deploys the fhEVM host contracts (FHEVMExecutor, ACL, InputVerifier, KMSVerifier) with mock signer keys and tracks plaintext values through event interception.
 
 ## Installation
 
@@ -49,7 +49,7 @@ contract MyFirstTest is FhevmTest {
         // 1. Encrypt a value — returns a handle and an input proof
         (externalEuint64 handle, bytes memory proof) = encryptUint64(42, address(this));
 
-        // 2. Verify the input through the real executor (as a contract would)
+        // 2. Verify the input through the host executor (as a contract would)
         euint64 verified = euint64.wrap(
             _executor.verifyInput(externalEuint64.unwrap(handle), address(this), proof, FheType.Uint64)
         );
@@ -72,14 +72,14 @@ When your test inherits `FhevmTest`, the `setUp()` function:
 
 1. Sets the chain ID to `31337`
 2. Derives two mock signers from hardcoded private keys (`MOCK_INPUT_SIGNER` and `MOCK_KMS_SIGNER`)
-3. Deploys real UPGRADEABLE proxies for all FHEVM host contracts:
+3. Deploys UUPS upgradeable proxies for all FHEVM host contracts:
    - **FHEVMExecutor** — processes FHE operations and emits events
    - **ACL** — manages per-handle access control (transient and persistent)
    - **InputVerifier** — verifies EIP-712 signed input proofs (threshold: 1 signer)
    - **KMSVerifier** — verifies EIP-712 signed decryption proofs (threshold: 1 signer)
 4. Starts the Foundry log recorder (`vm.recordLogs()`) for plaintext tracking
 
-All deployed contracts are real production code — no mocks. The only difference from mainnet is the use of known private keys for the input and KMS signers.
+The host contracts are the upstream implementations. The test stack differs from a live network in two ways: the input and KMS signers use known private keys, and plaintext values are tracked locally.
 
 ## Next Steps
 

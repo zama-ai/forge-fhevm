@@ -3,9 +3,9 @@ pragma solidity ^0.8.27;
 
 import {Test} from "forge-std/Test.sol";
 import {Vm} from "forge-std/Vm.sol";
-import {FHEEvents} from "@fhevm/host-contracts/contracts/FHEEvents.sol";
-import {fhevmExecutorAdd} from "@fhevm/host-contracts/addresses/FHEVMHostAddresses.sol";
-import {FheType} from "@fhevm/host-contracts/contracts/shared/FheType.sol";
+import {FHEEvents} from "./fhevm-host/contracts/FHEEvents.sol";
+import {fhevmExecutorAdd} from "./fhevm-host/addresses/FHEVMHostAddresses.sol";
+import {FheType} from "./fhevm-host/contracts/shared/FheType.sol";
 import {CleartextArithmetic} from "./cleartext/CleartextArithmetic.sol";
 import {FheTypeBitWidth} from "./cleartext/FheTypeBitWidth.sol";
 

@@ -1,0 +1,18 @@
+# Stand-in for a downstream repo consuming forge-fhevm. The OpenZeppelin pins below are
+# deliberately newer than the ones forge-fhevm builds its vendored host contracts against.
+[profile.default]
+src = "src"
+test = "test"
+solc = "0.8.27"
+evm_version = "cancun"
+libs = ["dependencies"]
+
+[dependencies]
+forge-std = "1.14.0"
+"@encrypted-types" = "0.0.4"
+"@fhevm-solidity" = "0.11.1"
+"@openzeppelin-contracts" = "5.4.0"
+"@openzeppelin-contracts-upgradeable" = "5.4.0"
+
+[soldeer]
+remappings_generate = false

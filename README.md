@@ -1,12 +1,12 @@
 # forge-fhevm
 
-Foundry-native testing library for [fhEVM](https://github.com/zama-ai/fhevm) confidential smart contracts. Write Forge tests that encrypt, compute, decrypt, and assert -- using real production host contracts, no mocks.
+Foundry-native testing library for [fhEVM](https://github.com/zama-ai/fhevm) confidential smart contracts. Write Forge tests that encrypt, compute, decrypt, and assert against the actual fhEVM host contracts.
 
 ## How it works
 
-forge-fhevm deploys the actual fhEVM host contracts (FHEVMExecutor, ACL, InputVerifier, KMSVerifier) as UUPS upgradeable proxies inside Foundry's test environment. When the executor processes an FHE operation, it emits an event. forge-fhevm intercepts these events via `vm.getRecordedLogs()` and maintains a local plaintext database that maps encrypted handles to their cleartext values. This lets tests exercise the exact same contract code paths as production while computing results in the clear.
+forge-fhevm deploys the fhEVM host contracts (FHEVMExecutor, ACL, InputVerifier, KMSVerifier) as UUPS upgradeable proxies inside Foundry's test environment. When the executor processes an FHE operation, it emits an event. forge-fhevm intercepts these events via `vm.getRecordedLogs()` and maintains a local plaintext database that maps encrypted handles to their cleartext values. This lets tests exercise the same contract code paths as production while computing results in the clear.
 
-The only deviation from mainnet is the use of mock private keys for the input signer and KMS signer, enabling deterministic EIP-712 proof generation in tests.
+The test environment uses mock private keys for the input signer and KMS signer, enabling deterministic EIP-712 proof generation.
 
 > [!TIP]
 > `vm.getRecordedLogs()` consumes recorded logs, which does not allow for FHE log processing when called directly in event inspection tests. Always use the `getRecordedLogs()` helper function to ensure logs are properly returned and fhEVM effects are correctly applied.

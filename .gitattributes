@@ -1,0 +1,4 @@
+# The bytecode blob is ~180 KB of hex, so suppress its diff. The generated interfaces are
+# small enough to stay visible in reviews.
+src/generated/HostBytecode.sol linguist-generated=true -diff
+src/generated/interfaces/** linguist-generated=true

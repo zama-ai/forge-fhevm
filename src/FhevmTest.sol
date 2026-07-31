@@ -2,15 +2,26 @@
 pragma solidity ^0.8.27;
 
 import {Vm} from "forge-std/Vm.sol";
-import {ACL} from "@fhevm/host-contracts/contracts/ACL.sol";
-import {HCULimit} from "@fhevm/host-contracts/contracts/HCULimit.sol";
-import {InputVerifier} from "@fhevm/host-contracts/contracts/InputVerifier.sol";
-import {KMSVerifier} from "@fhevm/host-contracts/contracts/KMSVerifier.sol";
-import {PauserSet} from "@fhevm/host-contracts/contracts/immutable/PauserSet.sol";
-import {EmptyUUPSProxy} from "@fhevm/host-contracts/contracts/emptyProxy/EmptyUUPSProxy.sol";
-import {EmptyUUPSProxyACL} from "@fhevm/host-contracts/contracts/emptyProxyACL/EmptyUUPSProxyACL.sol";
-import {IERC7984ERC20Wrapper} from "@openzeppelin/confidential-contracts/interfaces/IERC7984ERC20Wrapper.sol";
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {IERC20Minimal, IConfidentialERC20Wrapper} from "./interfaces/IConfidentialWrapper.sol";
+import {IACL} from "./generated/interfaces/IACL.sol";
+import {IFHEVMExecutor} from "./generated/interfaces/IFHEVMExecutor.sol";
+import {IHCULimit} from "./generated/interfaces/IHCULimit.sol";
+import {IInputVerifier} from "./generated/interfaces/IInputVerifier.sol";
+import {IKMSVerifier} from "./generated/interfaces/IKMSVerifier.sol";
+import {IEmptyUUPSProxy} from "./generated/interfaces/IEmptyUUPSProxy.sol";
+import {IEmptyUUPSProxyACL} from "./generated/interfaces/IEmptyUUPSProxyACL.sol";
+import {
+    ACL_CREATION_CODE,
+    HCU_LIMIT_CREATION_CODE,
+    FHEVM_EXECUTOR_CREATION_CODE,
+    INPUT_VERIFIER_CREATION_CODE,
+    KMS_VERIFIER_CREATION_CODE,
+    EMPTY_UUPS_PROXY_CREATION_CODE,
+    EMPTY_UUPS_PROXY_ACL_CREATION_CODE,
+    HCU_LIMIT_NO_DEPTH_CAP_CREATION_CODE,
+    PAUSER_SET_RUNTIME_CODE,
+    DEPLOYABLE_ERC1967_PROXY_RUNTIME_CODE
+} from "./generated/HostBytecode.sol";
 import {
     aclAdd,
     fhevmExecutorAdd,
@@ -18,16 +29,13 @@ import {
     inputVerifierAdd,
     kmsVerifierAdd,
     pauserSetAdd
-} from "@fhevm/host-contracts/addresses/FHEVMHostAddresses.sol";
-import {FheType} from "@fhevm/host-contracts/contracts/shared/FheType.sol";
-import {FHEVMExecutor} from "@fhevm/host-contracts/contracts/FHEVMExecutor.sol";
-import {DeployableERC1967Proxy} from "./DeployableERC1967Proxy.sol";
+} from "./fhevm-host/addresses/FHEVMHostAddresses.sol";
+import {FheType} from "./fhevm-host/contracts/shared/FheType.sol";
 import {PlaintextDBMixin} from "./PlaintextDBMixin.sol";
 import {InputProofHelper} from "./InputProofHelper.sol";
 import {KMSDecryptionProofHelper} from "./KMSDecryptionProofHelper.sol";
 import {UserDecryptHelper} from "./UserDecryptHelper.sol";
 import {CleartextArithmetic} from "./cleartext/CleartextArithmetic.sol";
-import {HCULimitNoDepthCap} from "./HCULimitNoDepthCap.sol";
 
 import {
     ebool,
@@ -63,11 +71,13 @@ abstract contract FhevmTest is PlaintextDBMixin {
     bytes internal constant EMPTY_EXTRA_DATA = hex"00";
     uint256 internal constant DEFAULT_USER_DECRYPT_DURATION_DAYS = 1;
     address internal constant PROXY_OWNER = address(0xBEEF);
-    string internal constant ERC1967_PROXY_ARTIFACT = "DeployableERC1967Proxy.sol:DeployableERC1967Proxy";
-    FHEVMExecutor internal _executor;
-    ACL internal _acl;
-    InputVerifier internal _inputVerifier;
-    KMSVerifier internal _kmsVerifier;
+    /// @dev ERC-1967 implementation slot: `keccak256("eip1967.proxy.implementation") - 1`.
+    bytes32 private constant _ERC1967_IMPL_SLOT = 0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc;
+
+    IFHEVMExecutor internal _executor;
+    IACL internal _acl;
+    IInputVerifier internal _inputVerifier;
+    IKMSVerifier internal _kmsVerifier;
 
     address internal mockInputSigner;
     address internal mockKmsSigner;
@@ -86,13 +96,13 @@ abstract contract FhevmTest is PlaintextDBMixin {
 
     /// @notice Funds `user` with wrapper underlying and wraps `amount` into confidential tokens.
     /// @dev This is the confidential-token equivalent of Foundry's `deal`.
-    function dealConfidential(IERC7984ERC20Wrapper wrapper, address user, uint256 amount) internal {
-        IERC20 underlyingToken = IERC20(wrapper.underlying());
+    function dealConfidential(address wrapper, address user, uint256 amount) internal {
+        IERC20Minimal underlyingToken = IERC20Minimal(IConfidentialERC20Wrapper(wrapper).underlying());
         deal(address(underlyingToken), user, underlyingToken.balanceOf(user) + amount);
 
         vm.startPrank(user);
-        underlyingToken.approve(address(wrapper), type(uint256).max);
-        wrapper.wrap(user, amount);
+        underlyingToken.approve(wrapper, type(uint256).max);
+        IConfidentialERC20Wrapper(wrapper).wrap(user, amount);
         vm.stopPrank();
     }
 
@@ -102,9 +112,9 @@ abstract contract FhevmTest is PlaintextDBMixin {
     /// on deep handle chains. This is useful for end-to-end tests whose orchestration is heavier
     /// than the individual production calls they are trying to validate.
     function disableHCUDepthLimit() internal {
-        address relaxedHcuLimit = address(new HCULimitNoDepthCap());
+        address relaxedHcuLimit = _deployBlob(HCU_LIMIT_NO_DEPTH_CAP_CREATION_CODE);
         vm.prank(PROXY_OWNER);
-        EmptyUUPSProxy(payable(hcuLimitAdd)).upgradeToAndCall(relaxedHcuLimit, "");
+        IEmptyUUPSProxy(hcuLimitAdd).upgradeToAndCall(relaxedHcuLimit, "");
     }
 
     /// @notice Encrypts a boolean for the given target contract.
@@ -497,104 +507,100 @@ abstract contract FhevmTest is PlaintextDBMixin {
         _deployInputVerifier();
         _deployKMSVerifier();
 
-        _executor = FHEVMExecutor(fhevmExecutorAdd);
-        _acl = ACL(aclAdd);
-        _inputVerifier = InputVerifier(inputVerifierAdd);
-        _kmsVerifier = KMSVerifier(kmsVerifierAdd);
+        _executor = IFHEVMExecutor(fhevmExecutorAdd);
+        _acl = IACL(aclAdd);
+        _inputVerifier = IInputVerifier(inputVerifierAdd);
+        _kmsVerifier = IKMSVerifier(kmsVerifierAdd);
+    }
+
+    /// @dev Must run the constructor: etching runtime code instead leaves the UUPS `__self`
+    /// immutable zeroed, which breaks every later upgrade.
+    function _deployBlob(bytes memory creationCode) private returns (address addr) {
+        assembly {
+            addr := create(0, add(creationCode, 0x20), mload(creationCode))
+        }
+        require(addr != address(0), "forge-fhevm: host contract deployment failed");
+    }
+
+    /// @dev Writing the implementation slot by hand is complete: it is the only state an ERC-1967
+    /// proxy constructor sets, and `vm.etch` cannot run one. The proxy is left uninitialized —
+    /// callers must still initialize it before upgrading.
+    function _installProxy(address target, address impl) private {
+        vm.etch(target, DEPLOYABLE_ERC1967_PROXY_RUNTIME_CODE);
+        vm.store(target, _ERC1967_IMPL_SLOT, bytes32(uint256(uint160(impl))));
+    }
+
+    function _installEmptyProxy(address target) private {
+        _installProxy(target, _deployBlob(EMPTY_UUPS_PROXY_CREATION_CODE));
+        IEmptyUUPSProxy(target).initialize();
     }
 
     function _deployPauserSet() internal {
-        vm.etch(pauserSetAdd, address(new PauserSet()).code);
+        // No constructor and no immutables, so etching the runtime blob is exact.
+        vm.etch(pauserSetAdd, PAUSER_SET_RUNTIME_CODE);
     }
 
     function _deployACL() internal {
-        address emptyProxyAclImpl = address(new EmptyUUPSProxyACL());
+        // Must run first: every other empty proxy authorizes upgrades through `ACLOwnable`,
+        // which reads the owner from the ACL contract at its canonical address.
+        _installProxy(aclAdd, _deployBlob(EMPTY_UUPS_PROXY_ACL_CREATION_CODE));
+        IEmptyUUPSProxyACL(aclAdd).initialize(PROXY_OWNER);
 
-        deployCodeTo(
-            ERC1967_PROXY_ARTIFACT,
-            abi.encode(emptyProxyAclImpl, abi.encodeCall(EmptyUUPSProxyACL.initialize, (PROXY_OWNER))),
-            aclAdd
-        );
-
-        address aclImpl = address(new ACL());
+        address aclImpl = _deployBlob(ACL_CREATION_CODE);
         vm.prank(PROXY_OWNER);
-        EmptyUUPSProxyACL(aclAdd).upgradeToAndCall(aclImpl, abi.encodeCall(ACL.initializeFromEmptyProxy, ()));
+        IEmptyUUPSProxyACL(aclAdd).upgradeToAndCall(aclImpl, abi.encodeCall(IACL.initializeFromEmptyProxy, ()));
     }
 
     function _deployHCULimit() internal {
-        address emptyProxyImpl = address(new EmptyUUPSProxy());
+        _installEmptyProxy(hcuLimitAdd);
 
-        deployCodeTo(
-            ERC1967_PROXY_ARTIFACT,
-            abi.encode(emptyProxyImpl, abi.encodeCall(EmptyUUPSProxy.initialize, ())),
-            hcuLimitAdd
-        );
-
-        address hcuLimitImpl = address(new HCULimit());
+        address hcuLimitImpl = _deployBlob(HCU_LIMIT_CREATION_CODE);
         vm.prank(PROXY_OWNER);
-        EmptyUUPSProxy(hcuLimitAdd)
+        IEmptyUUPSProxy(hcuLimitAdd)
             .upgradeToAndCall(
-                hcuLimitImpl, abi.encodeCall(HCULimit.initializeFromEmptyProxy, (20_000_000, 5_000_000, 20_000_000))
+                hcuLimitImpl, abi.encodeCall(IHCULimit.initializeFromEmptyProxy, (20_000_000, 5_000_000, 20_000_000))
             );
     }
 
     function _deployRealExecutor() internal {
-        address emptyProxyImpl = address(new EmptyUUPSProxy());
+        _installEmptyProxy(fhevmExecutorAdd);
 
-        deployCodeTo(
-            ERC1967_PROXY_ARTIFACT,
-            abi.encode(emptyProxyImpl, abi.encodeCall(EmptyUUPSProxy.initialize, ())),
-            fhevmExecutorAdd
-        );
-
-        address executorImpl = address(new FHEVMExecutor());
+        address executorImpl = _deployBlob(FHEVM_EXECUTOR_CREATION_CODE);
         vm.prank(PROXY_OWNER);
-        EmptyUUPSProxy(fhevmExecutorAdd)
-            .upgradeToAndCall(executorImpl, abi.encodeCall(FHEVMExecutor.initializeFromEmptyProxy, ()));
+        IEmptyUUPSProxy(fhevmExecutorAdd)
+            .upgradeToAndCall(executorImpl, abi.encodeCall(IFHEVMExecutor.initializeFromEmptyProxy, ()));
     }
 
     function _deployInputVerifier() internal {
-        address emptyProxyImpl = address(new EmptyUUPSProxy());
+        _installEmptyProxy(inputVerifierAdd);
 
-        deployCodeTo(
-            ERC1967_PROXY_ARTIFACT,
-            abi.encode(emptyProxyImpl, abi.encodeCall(EmptyUUPSProxy.initialize, ())),
-            inputVerifierAdd
-        );
-
-        address inputVerifierImpl = address(new InputVerifier());
+        address inputVerifierImpl = _deployBlob(INPUT_VERIFIER_CREATION_CODE);
         address[] memory signers = new address[](1);
         signers[0] = mockInputSigner;
 
         vm.prank(PROXY_OWNER);
-        EmptyUUPSProxy(inputVerifierAdd)
+        IEmptyUUPSProxy(inputVerifierAdd)
             .upgradeToAndCall(
                 inputVerifierImpl,
                 abi.encodeCall(
-                    InputVerifier.initializeFromEmptyProxy, (inputVerifierAdd, uint64(block.chainid), signers, 1)
+                    IInputVerifier.initializeFromEmptyProxy, (inputVerifierAdd, uint64(block.chainid), signers, 1)
                 )
             );
     }
 
     function _deployKMSVerifier() internal {
-        address emptyProxyImpl = address(new EmptyUUPSProxy());
+        _installEmptyProxy(kmsVerifierAdd);
 
-        deployCodeTo(
-            ERC1967_PROXY_ARTIFACT,
-            abi.encode(emptyProxyImpl, abi.encodeCall(EmptyUUPSProxy.initialize, ())),
-            kmsVerifierAdd
-        );
-
-        address kmsVerifierImpl = address(new KMSVerifier());
+        address kmsVerifierImpl = _deployBlob(KMS_VERIFIER_CREATION_CODE);
         address[] memory signers = new address[](1);
         signers[0] = mockKmsSigner;
 
         vm.prank(PROXY_OWNER);
-        EmptyUUPSProxy(kmsVerifierAdd)
+        IEmptyUUPSProxy(kmsVerifierAdd)
             .upgradeToAndCall(
                 kmsVerifierImpl,
                 abi.encodeCall(
-                    KMSVerifier.initializeFromEmptyProxy, (kmsVerifierAdd, uint64(block.chainid), signers, 1)
+                    IKMSVerifier.initializeFromEmptyProxy, (kmsVerifierAdd, uint64(block.chainid), signers, 1)
                 )
             );
     }

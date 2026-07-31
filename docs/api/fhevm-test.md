@@ -36,7 +36,7 @@ contract MyTest is FhevmTest {
 ### _executor
 
 ```solidity
-FHEVMExecutor internal _executor;
+IFHEVMExecutor internal _executor;
 ```
 
 The deployed FHEVMExecutor instance. Processes FHE operations and emits events consumed by the plaintext database.
@@ -44,7 +44,7 @@ The deployed FHEVMExecutor instance. Processes FHE operations and emits events c
 ### _acl
 
 ```solidity
-ACL internal _acl;
+IACL internal _acl;
 ```
 
 The deployed ACL instance. Manages per-handle access control — both transient (within a transaction) and persistent (across transactions).
@@ -52,7 +52,7 @@ The deployed ACL instance. Manages per-handle access control — both transient 
 ### _inputVerifier
 
 ```solidity
-InputVerifier internal _inputVerifier;
+IInputVerifier internal _inputVerifier;
 ```
 
 The deployed InputVerifier instance. Validates EIP-712 signed input proofs. Configured with `MOCK_INPUT_SIGNER` as the single authorized signer (threshold: 1).
@@ -60,7 +60,7 @@ The deployed InputVerifier instance. Validates EIP-712 signed input proofs. Conf
 ### _kmsVerifier
 
 ```solidity
-KMSVerifier internal _kmsVerifier;
+IKMSVerifier internal _kmsVerifier;
 ```
 
 The deployed KMSVerifier instance. Validates EIP-712 signed decryption proofs. Configured with `MOCK_KMS_SIGNER` as the single authorized signer (threshold: 1).
