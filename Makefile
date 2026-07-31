@@ -3,7 +3,6 @@ FHEVM_VERSION ?= v0.11.0
 FHEVM_COMMIT  ?=
 FHEVM_REPO    := https://github.com/zama-ai/fhevm.git
 
-# Where vendored contracts live
 VENDOR_DIR := src/fhevm-host/contracts
 TEMP_DIR   := .fhevm-tmp
 GEN_DIR    := src/generated
@@ -43,9 +42,8 @@ clean-tmp:
 
 ## Regenerate the OZ-free surface (bytecode blobs + interfaces) from the vendored source.
 ## Always run this after touching anything under $(VENDOR_DIR), and commit the result.
-## FhevmTest and the test suite are skipped here on purpose: they import the very files this
-## target produces, so building them first would make regeneration impossible from a clean
-## tree. Everything the generator reads compiles independently of them.
+## The skips are required, not an optimization: those sources import the files this target
+## produces, so a clean tree could never build them first.
 generate:
 	@forge build --skip 'src/FhevmTest.sol' --skip 'test/**'
 	@python3 script/gen/generate.py

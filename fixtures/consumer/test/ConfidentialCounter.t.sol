@@ -5,8 +5,6 @@ import {FhevmTest} from "forge-fhevm/FhevmTest.sol";
 import {euint64, externalEuint64} from "encrypted-types/EncryptedTypes.sol";
 import {ConfidentialCounter} from "../src/ConfidentialCounter.sol";
 
-/// @dev End-to-end check that a downstream repo can inherit the test base while pinning its own
-/// (newer) OpenZeppelin, with the library resolving from an installed dependency directory.
 contract ConfidentialCounterTest is FhevmTest {
     ConfidentialCounter internal counter;
 
