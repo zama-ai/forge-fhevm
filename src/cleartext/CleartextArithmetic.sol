@@ -85,13 +85,26 @@ library CleartextArithmetic {
     }
 
     function shl(uint256 a, uint256 b, uint256 bitWidth) internal pure returns (uint256) {
-        return clamp(a << (b % bitWidth), bitWidth);
+        if (b >= bitWidth) {
+            return 0;
+        }
+        return clamp(a << b, bitWidth);
     }
 
     function shr(uint256 a, uint256 b, uint256 bitWidth) internal pure returns (uint256) {
-        return clamp(a >> (b % bitWidth), bitWidth);
+        if (b >= bitWidth) {
+            return 0;
+        }
+        return clamp(a >> b, bitWidth);
     }
 
+    /// @dev Rotations are cyclic: the amount wraps via `b % bitWidth`. This intentionally diverges
+    ///      from {shl}/{shr}, which saturate to 0 when `b >= bitWidth`. Do NOT "align" rotations with
+    ///      the shift overshift behavior — tfhe-rs's overshift-returns-zero change applies only to
+    ///      shifts, never rotations, so an over-rotation equals a rotation by `amount % bitWidth`.
+    ///      Note: tfhe-rs's barrel shifter reduces the rotate amount modulo `next_pow2(bitWidth)`;
+    ///      this equals `bitWidth` for every FHEVM-rotatable type (all powers of two: 8/16/32/64/
+    ///      128/256), so `b % bitWidth` is exact here.
     function rotl(uint256 a, uint256 b, uint256 bitWidth) internal pure returns (uint256) {
         uint256 shift = b % bitWidth;
         if (shift == 0) {
@@ -176,11 +189,26 @@ library CleartextArithmetic {
         return mul(a, b, bw);
     }
 
+    /// @dev Division is intentionally NOT made "total". tfhe-rs only makes div "total" on the
+    ///      *encrypted-divisor* path (`div_rem_parallelized`: unsigned `x / 0 == 2^bitWidth - 1`,
+    ///      `x % 0 == x`), because a fully-encrypted divisor cannot be branched on. FHEVM never
+    ///      exposes that path: the host `FHEVMExecutor` supports division/remainder only with a
+    ///      *plaintext scalar* divisor (encrypted divisors revert with `IsNotScalar`). And tfhe-rs's
+    ///      own scalar path *panics* on a zero divisor — the FHEVM host mirrors this by reverting with
+    ///      `DivisionByZero` for a zero scalar *before* reaching this cleartext mock. So `b != 0` is
+    ///      guaranteed here, and the native `/` reverting on `b == 0` is the correct, faithful backstop
+    ///      — matching both tfhe-rs's scalar semantics and the host contract's revert. (Even on the
+    ///      encrypted path, tfhe-rs documents the total result as "This behaviour should not be relied
+    ///      on," so reproducing it in the mock would be doubly wrong.)
     function fheDiv(uint256 lhsRaw, uint256 rhsRaw, uint8 fheType, bytes1 scalarByte) internal pure returns (uint256) {
         (uint256 a, uint256 b,) = _resolveBinaryOperands(lhsRaw, rhsRaw, fheType, scalarByte);
         return a / b;
     }
 
+    /// @dev See {fheDiv}: `b != 0` is guaranteed by the host contract's `DivisionByZero` guard, so the
+    ///      native `%` reverting on a zero divisor faithfully mirrors on-chain FHEVM behavior and
+    ///      tfhe-rs's scalar-path panic. The encrypted-path "total" convention (`x % 0 == x`) is
+    ///      deliberately not reproduced, since FHEVM never routes remainder through it.
     function fheRem(uint256 lhsRaw, uint256 rhsRaw, uint8 fheType, bytes1 scalarByte) internal pure returns (uint256) {
         (uint256 a, uint256 b,) = _resolveBinaryOperands(lhsRaw, rhsRaw, fheType, scalarByte);
         return a % b;
