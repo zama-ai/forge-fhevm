@@ -18,9 +18,8 @@ contract ERC20StandardMock is ERC20SixDecimalsMock {
     constructor() ERC20("ERC20StandardMock", "STANDARD") {}
 }
 
-/// @notice Rejects a non-zero to non-zero allowance change, the approval behavior USDT documents.
-/// @dev Upstream `ERC20ForceApproveMock`. Note this quirk is *documented* by USDT but its `require`
-/// is commented out in the deployed contract; the live deviation is the missing return value below.
+/// @notice Rejects a non-zero to non-zero allowance change, as mainnet USDT does.
+/// @dev Upstream `ERC20ForceApproveMock`. Callers must reset the allowance to zero first.
 contract ERC20ForceApproveMock is ERC20SixDecimalsMock {
     constructor() ERC20("ERC20ForceApproveMock", "ZEROFIRST") {}
 
