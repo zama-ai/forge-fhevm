@@ -2,7 +2,7 @@
 pragma solidity ^0.8.27;
 
 import {FhevmTest} from "../src/FhevmTest.sol";
-import {SampleEncryptedToken} from "./helpers/SampleEncryptedToken.sol";
+import {SampleEncryptedToken} from "./mocks/SampleEncryptedToken.sol";
 import {externalEuint64, euint64} from "encrypted-types/EncryptedTypes.sol";
 
 contract FhevmTestIntegrationTest is FhevmTest {
