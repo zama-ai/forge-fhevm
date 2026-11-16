@@ -4,7 +4,7 @@ pragma solidity ^0.8.27;
 import {Vm} from "forge-std/Vm.sol";
 import {FhevmTest} from "../src/FhevmTest.sol";
 import {KMSDecryptionProofHelper} from "../src/KMSDecryptionProofHelper.sol";
-import {FoundryERC7984Mock} from "./helpers/FoundryERC7984Mock.sol";
+import {FoundryERC7984Mock} from "./mocks/FoundryERC7984Mock.sol";
 
 import {FHE, euint64, externalEuint64} from "@fhevm/solidity/lib/FHE.sol";
 import {IERC7984} from "@openzeppelin/confidential-contracts/interfaces/IERC7984.sol";

@@ -2,7 +2,8 @@
 pragma solidity ^0.8.27;
 
 import {Vm} from "forge-std/Vm.sol";
-import {IERC20Minimal, IConfidentialERC20Wrapper} from "./interfaces/IConfidentialWrapper.sol";
+import {IConfidentialERC20Wrapper} from "./interfaces/IConfidentialWrapper.sol";
+import {IERC20Minimal} from "./interfaces/IERC20.sol";
 import {IACL} from "./generated/interfaces/IACL.sol";
 import {IFHEVMExecutor} from "./generated/interfaces/IFHEVMExecutor.sol";
 import {IHCULimit} from "./generated/interfaces/IHCULimit.sol";
@@ -36,6 +37,7 @@ import {InputProofHelper} from "./InputProofHelper.sol";
 import {KMSDecryptionProofHelper} from "./KMSDecryptionProofHelper.sol";
 import {UserDecryptHelper} from "./UserDecryptHelper.sol";
 import {CleartextArithmetic} from "./cleartext/CleartextArithmetic.sol";
+import {SafeERC20} from "./utils/SafeERC20.sol";
 
 import {
     ebool,
@@ -101,7 +103,9 @@ abstract contract FhevmTest is PlaintextDBMixin {
         deal(address(underlyingToken), user, underlyingToken.balanceOf(user) + amount);
 
         vm.startPrank(user);
-        underlyingToken.approve(wrapper, type(uint256).max);
+        // `forceApprove` rather than a plain `approve`: non-standard underlyings may return no value
+        // or require the allowance to be reset to zero first (sush as USDT).
+        SafeERC20.forceApprove(underlyingToken, wrapper, type(uint256).max);
         IConfidentialERC20Wrapper(wrapper).wrap(user, amount);
         vm.stopPrank();
     }
